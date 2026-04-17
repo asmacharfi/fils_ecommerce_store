@@ -8,6 +8,7 @@ interface Query {
   colorId?: string;
   sizeId?: string;
   isFeatured?: boolean;
+  isBillboard?: boolean;
 }
 
 const getProducts = async (query: Query): Promise<Product[]> => {
@@ -18,10 +19,11 @@ const getProducts = async (query: Query): Promise<Product[]> => {
       sizeId: query.sizeId,
       categoryId: query.categoryId,
       isFeatured: query.isFeatured,
+      isBillboard: query.isBillboard,
     },
   });
 
-  const res = await fetch(url);
+  const res = await fetch(url, { cache: "no-store" });
 
   return res.json();
 };
