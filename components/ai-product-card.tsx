@@ -13,6 +13,8 @@ interface AIProductCardProps {
 
 const AIProductCard: React.FC<AIProductCardProps> = ({ product }) => {
   const cart = useCart();
+  const stock = Math.max(0, Math.trunc(Number(product.stock) || 0));
+  const out = stock <= 0;
 
   return (
     <div className="rounded-xl border bg-white p-3 space-y-3">
@@ -37,10 +39,11 @@ const AIProductCard: React.FC<AIProductCardProps> = ({ product }) => {
       <div className="flex items-center justify-between">
         <Currency value={product.price} />
         <Button
-          onClick={() => cart.addItem(product)}
-          className="px-4 py-2 text-xs"
+          onClick={() => cart.addOrIncrement(product, 1)}
+          disabled={out}
+          className="px-4 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Add to Cart
+          {out ? "Out of Stock" : "Add to Cart"}
         </Button>
       </div>
     </div>

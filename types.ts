@@ -2,13 +2,18 @@ export interface Product {
   id: string;
   category: Category;
   name: string;
+  description: string;
   price: string;
+  stock: number;
+  width?: number | null;
+  height?: number | null;
+  depth?: number | null;
   isFeatured: boolean;
   isBillboard: boolean;
   size: Size;
   color: Color;
-  images: Image[]
-};
+  images: Image[];
+}
 
 export interface Image {
   id: string;

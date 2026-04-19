@@ -1,7 +1,8 @@
-import { Product } from "@/types";
+import { normalizeProducts } from "@/lib/catalog/normalize-product";
+import type { Product } from "@/types";
 import qs from "query-string";
 
-const URL=`${process.env.NEXT_PUBLIC_API_URL}/products`;
+const URL = `${process.env.NEXT_PUBLIC_API_URL}/products`;
 
 interface Query {
   categoryId?: string;
@@ -24,8 +25,8 @@ const getProducts = async (query: Query): Promise<Product[]> => {
   });
 
   const res = await fetch(url, { cache: "no-store" });
-
-  return res.json();
+  const json = await res.json();
+  return normalizeProducts(json);
 };
 
 export default getProducts;

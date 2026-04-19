@@ -1,5 +1,6 @@
 import qs from "query-string";
 
+import { normalizeProducts } from "@/lib/catalog/normalize-product";
 import type { Product } from "@/types";
 
 export type StoreCatalogQuery = {
@@ -37,6 +38,6 @@ export async function fetchStoreProducts(
     throw new Error("Failed to fetch products");
   }
 
-  const data = (await res.json()) as Product[];
-  return Array.isArray(data) ? data : [];
+  const data = await res.json();
+  return normalizeProducts(data);
 }

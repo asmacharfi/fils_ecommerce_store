@@ -32,10 +32,12 @@ const ProductCard: React.FC<ProductCard> = ({
     previewModal.onOpen(data);
   };
 
+  const stock = Math.max(0, Math.trunc(Number(data.stock) || 0));
+
   const onAddToCart: MouseEventHandler<HTMLButtonElement> = (event) => {
     event.stopPropagation();
-
-    cart.addItem(data);
+    if (stock <= 0) return;
+    cart.addOrIncrement(data, 1);
   };
   
   return ( 
@@ -55,8 +57,9 @@ const ProductCard: React.FC<ProductCard> = ({
               icon={<Expand size={20} className="text-gray-600" />}
             />
             <IconButton
-              onClick={onAddToCart} 
-              icon={<ShoppingCart size={20} className="text-gray-600" />} 
+              onClick={onAddToCart}
+              disabled={stock <= 0}
+              icon={<ShoppingCart size={20} className={stock <= 0 ? "text-gray-300" : "text-gray-600"} />}
             />
           </div>
         </div>
