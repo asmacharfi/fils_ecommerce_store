@@ -4,6 +4,7 @@ import { ShoppingCart } from "lucide-react";
 
 import Currency  from "@/components/ui/currency";
 import Button from "@/components/ui/button";
+import { AskAISimilarButton } from "@/components/ask-ai-similar-button";
 import { Product } from "@/types";
 import useCart from "@/hooks/use-cart";
 
@@ -39,11 +40,15 @@ const Info: React.FC<InfoProps> = ({ data }) => {
           <div className="h-6 w-6 rounded-full border border-gray-600" style={{ backgroundColor: data?.color?.value }} />
         </div>
       </div>
-      <div className="mt-10 flex items-center gap-x-3">
-        <Button onClick={onAddToCart} className="flex items-center gap-x-2">
+      <div className="mt-10 space-y-3">
+        <Button
+          onClick={onAddToCart}
+          className="flex w-full items-center justify-center gap-2 px-4 py-3 text-sm"
+        >
           Add To Cart
-          <ShoppingCart size={20} />
+          <ShoppingCart className="h-4 w-4 shrink-0" />
         </Button>
+        <AskAISimilarButton productName={data.name} />
       </div>
     </div>
   );

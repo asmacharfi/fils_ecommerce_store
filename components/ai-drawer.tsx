@@ -1,194 +1,292 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
-import { Bot, Loader2, MessageCircle, Send, User, X } from "lucide-react";
+import { useChat } from "@ai-sdk/react";
+import {
+  DefaultChatTransport,
+  isTextUIPart,
+  isToolUIPart,
+  type UIMessage,
+} from "ai";
+import { Bot, Loader2, Send, Sparkles, X } from "lucide-react";
+import { FormEvent, Fragment, useEffect, useMemo, useRef, useState } from "react";
 
-import Button from "@/components/ui/button";
-import AIProductCard from "@/components/ai-product-card";
+import { MessageBubble } from "@/components/ai-chat/message-bubble";
+import { ToolCallUI, type SearchProductsToolUIPart } from "@/components/ai-chat/tool-call-ui";
+import { WelcomeScreen } from "@/components/ai-chat/welcome-screen";
+import { useAIChatPanel } from "@/components/ai-chat-panel-context";
 import { useAIContext } from "@/components/ai-context";
-import { Product } from "@/types";
+import Button from "@/components/ui/button";
+import { formatAiChatError, isOpenAIQuotaOrBillingError } from "@/lib/ai/format-chat-error";
 
-type AssistantReply =
-  | { type: "message"; content: string }
-  | { type: "products"; content?: string; products: Product[] };
+function getTextFromParts(message: UIMessage): string {
+  return message.parts
+    .filter(isTextUIPart)
+    .map((p) => p.text)
+    .join("");
+}
 
-type ChatMessage = {
-  role: "user" | "assistant";
-  text?: string;
-  products?: Product[];
-};
+function AssistantErrorPanel({
+  error,
+  onDismiss,
+  onStop,
+}: {
+  error: Error;
+  onDismiss: () => void;
+  onStop: () => void;
+}) {
+  const quota = isOpenAIQuotaOrBillingError(error);
 
-const suggestionChips = [
-  "Show me cheap products",
-  "Similar to this product",
-  "Best in this category",
-];
+  return (
+    <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
+      <p className="font-semibold">Assistant could not complete that request</p>
+      <p className="mt-1 text-xs leading-relaxed opacity-90">{formatAiChatError(error)}</p>
+
+      {quota && (
+        <div className="mt-3 rounded-lg border border-amber-300/80 bg-white/70 px-3 py-2 text-left text-xs text-zinc-800 dark:border-amber-800 dark:bg-zinc-900/60 dark:text-zinc-200">
+          <p className="font-medium text-zinc-900 dark:text-zinc-100">Fix it (OpenAI)</p>
+          <ol className="mt-2 list-decimal space-y-1 pl-4">
+            <li>
+              Open{" "}
+              <a
+                className="font-medium text-amber-800 underline hover:text-amber-900 dark:text-amber-300"
+                href="https://platform.openai.com/account/billing"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Billing
+              </a>{" "}
+              and add a payment method or buy credits.
+            </li>
+            <li>
+              Confirm an API key at{" "}
+              <a
+                className="font-medium text-amber-800 underline hover:text-amber-900 dark:text-amber-300"
+                href="https://platform.openai.com/api-keys"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                API keys
+              </a>
+              .
+            </li>
+            <li>
+              Set <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">OPENAI_API_KEY</code> in{" "}
+              <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">.env</code> (see{" "}
+              <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">.env.example</code>).
+            </li>
+            <li>Restart <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">npm run dev</code>.</li>
+          </ol>
+        </div>
+      )}
+
+      <div className="mt-3 flex flex-wrap gap-3">
+        <button type="button" className="text-xs font-medium underline" onClick={onDismiss}>
+          Dismiss
+        </button>
+        <button type="button" className="text-xs font-medium underline" onClick={() => void onStop()}>
+          Stop request
+        </button>
+      </div>
+    </div>
+  );
+}
 
 const AIDrawer = () => {
   const { pageContext } = useAIContext();
-  const [open, setOpen] = useState(false);
+  const { isOpen, closeChat, pendingMessage, clearPendingMessage } = useAIChatPanel();
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: "assistant",
-      text: "I can help you discover products, compare options, and add items to cart quickly.",
-    },
-  ]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const history = useMemo(
+  const transport = useMemo(
     () =>
-      messages
-        .filter((message) => message.text)
-        .map((message) => ({
-          role: message.role,
-          content: message.text as string,
-        })),
-    [messages]
+      new DefaultChatTransport({
+        api: "/api/chat",
+        prepareSendMessagesRequest: ({ id, messages, trigger, messageId, body }) => ({
+          body: {
+            ...body,
+            id,
+            messages,
+            trigger,
+            messageId,
+            pageContext,
+          },
+        }),
+      }),
+    [pageContext]
   );
 
-  const sendMessage = async (rawValue: string) => {
-    const value = rawValue.trim();
-    if (!value || loading) {
+  const { messages, sendMessage, status, error, stop, clearError } = useChat({
+    transport,
+    messages: [],
+  });
+
+  const busy = status === "submitted" || status === "streaming";
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, busy]);
+
+  useEffect(() => {
+    if (!isOpen || !pendingMessage || busy) {
       return;
     }
+    void sendMessage({ text: pendingMessage });
+    clearPendingMessage();
+  }, [isOpen, pendingMessage, busy, sendMessage, clearPendingMessage]);
 
-    setMessages((current) => [...current, { role: "user", text: value }]);
+  const sendFromText = async (raw: string) => {
+    const value = raw.trim();
+    if (!value || busy) return;
     setInput("");
-    setLoading(true);
-
-    try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: value,
-          context: pageContext,
-          history,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Request failed");
-      }
-
-      const data = (await response.json()) as AssistantReply;
-
-      if (data.type === "products") {
-        setMessages((current) => [
-          ...current,
-          {
-            role: "assistant",
-            text: data.content || "Here are the best matches I found.",
-            products: data.products,
-          },
-        ]);
-        return;
-      }
-
-      setMessages((current) => [...current, { role: "assistant", text: data.content }]);
-    } catch {
-      setMessages((current) => [
-        ...current,
-        {
-          role: "assistant",
-          text: "I could not process that request right now. Please try again.",
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
+    await sendMessage({ text: value });
   };
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await sendMessage(input);
+    await sendFromText(input);
   };
 
+  if (!isOpen) {
+    return null;
+  }
+
   return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-black text-white shadow-xl transition hover:opacity-90"
-        aria-label="Open shopping assistant"
-      >
-        <MessageCircle className="mx-auto h-6 w-6" />
-      </button>
+    <Fragment>
+      <div
+        className="fixed inset-0 z-40 bg-black/50 sm:hidden"
+        onClick={closeChat}
+        aria-hidden="true"
+      />
 
       <div
-        className={`fixed inset-0 z-50 transition ${open ? "pointer-events-auto" : "pointer-events-none"}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ai-drawer-title"
+        className="fixed z-50 box-border overflow-hidden border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 max-sm:inset-0 max-sm:h-[100dvh] max-sm:w-full sm:left-auto sm:right-0 sm:top-0 sm:h-screen sm:w-[448px] sm:border-l"
       >
-        <div
-          onClick={() => setOpen(false)}
-          className={`absolute inset-0 bg-black/40 transition-opacity ${open ? "opacity-100" : "opacity-0"}`}
-        />
-        <aside
-          className={`absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl transition-transform duration-300 ${
-            open ? "translate-x-0" : "translate-x-full"
-          }`}
-        >
-          <div className="flex h-full flex-col">
-            <div className="border-b p-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Shopping Assistant</h2>
-                <button onClick={() => setOpen(false)} aria-label="Close assistant">
-                  <X className="h-5 w-5 text-gray-700" />
-                </button>
-              </div>
-              <p className="mt-2 text-xs text-gray-500">{pageContext}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {suggestionChips.map((suggestion) => (
-                  <button
-                    key={suggestion}
-                    onClick={() => sendMessage(suggestion)}
-                    className="rounded-full border px-3 py-1 text-xs transition hover:bg-gray-100"
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
+        <div className="relative h-full w-full">
+          <header className="absolute left-0 right-0 top-0 z-10 h-16 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+            <button
+              type="button"
+              onClick={closeChat}
+              className="absolute right-4 top-1/2 h-10 w-10 -translate-y-1/2 rounded-md text-center leading-10 text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              aria-label="Close assistant"
+            >
+              <X className="inline-block h-4 w-4 align-middle" />
+            </button>
+            <div
+              id="ai-drawer-title"
+              className="truncate pl-6 pr-16 text-base font-semibold leading-[4rem] text-zinc-900 dark:text-zinc-100"
+            >
+              <Sparkles className="mr-2 inline-block h-5 w-5 align-middle text-amber-500" />
+              Shopping Assistant
             </div>
+          </header>
 
-            <div className="flex-1 space-y-4 overflow-y-auto p-4">
-              {messages.map((message, index) => (
-                <div key={`${message.role}-${index}`} className="space-y-2">
-                  <div
-                    className={`flex items-center gap-2 text-xs ${
-                      message.role === "assistant" ? "text-gray-500" : "text-gray-700"
-                    }`}
-                  >
-                    {message.role === "assistant" ? <Bot className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
-                    <span>{message.role === "assistant" ? "Assistant" : "You"}</span>
-                  </div>
-                  {message.text && <p className="rounded-lg bg-gray-100 p-3 text-sm">{message.text}</p>}
-                  {message.products && message.products.length > 0 && (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      {message.products.map((product) => (
-                        <AIProductCard key={product.id} product={product} />
-                      ))}
+          <div className="absolute bottom-[88px] left-0 right-0 top-16 overflow-y-auto overscroll-contain px-4 py-4">
+            {error && (
+              <AssistantErrorPanel
+                error={error}
+                onDismiss={() => clearError()}
+                onStop={() => stop()}
+              />
+            )}
+
+            {messages.length === 0 ? (
+              <WelcomeScreen onSuggestionClick={(msg) => void sendFromText(msg.text)} />
+            ) : (
+              <div className="space-y-4">
+                {messages.map((message) => {
+                  if (message.role === "user") {
+                    const content = getTextFromParts(message);
+                    if (!content.trim()) return null;
+                    return (
+                      <div key={message.id} className="space-y-3">
+                        <MessageBubble role="user" content={content} />
+                      </div>
+                    );
+                  }
+
+                  const hasRenderablePart = message.parts.some((part) => {
+                    if (isTextUIPart(part) && part.text.trim()) return true;
+                    if (isToolUIPart(part) && part.type === "tool-searchProducts") return true;
+                    return false;
+                  });
+
+                  if (!hasRenderablePart) return null;
+
+                  return (
+                    <div key={message.id} className="space-y-3">
+                      {message.parts.map((part, idx) => {
+                        if (isToolUIPart(part) && part.type === "tool-searchProducts") {
+                          return (
+                            <ToolCallUI
+                              key={`${message.id}-${part.toolCallId ?? idx}`}
+                              toolPart={part as SearchProductsToolUIPart}
+                            />
+                          );
+                        }
+                        if (isTextUIPart(part) && part.text.trim()) {
+                          return (
+                            <MessageBubble
+                              key={`${message.id}-text-${idx}`}
+                              role="assistant"
+                              content={part.text}
+                            />
+                          );
+                        }
+                        return null;
+                      })}
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                  );
+                })}
 
-            <form onSubmit={onSubmit} className="border-t p-3">
-              <div className="flex items-center gap-2">
-                <input
-                  value={input}
-                  onChange={(event) => setInput(event.target.value)}
-                  placeholder="Ask for product recommendations..."
-                  className="h-10 flex-1 rounded-full border px-4 text-sm focus:outline-none focus:ring-2 focus:ring-black/20"
-                />
-                <Button type="submit" disabled={loading} className="h-10 px-4">
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                </Button>
+                {busy && messages[messages.length - 1]?.role === "user" && (
+                  <div className="flex gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+                      <Bot className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div className="flex items-center gap-2 rounded-2xl bg-zinc-100 px-4 py-2 dark:bg-zinc-800">
+                      <div className="flex gap-1">
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-amber-400 [animation-delay:-0.3s]" />
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-amber-400 [animation-delay:-0.15s]" />
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-amber-400" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div ref={messagesEndRef} />
               </div>
+            )}
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 border-t border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950">
+            <form onSubmit={onSubmit} className="relative">
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask about our products..."
+                disabled={busy}
+                className="box-border h-10 w-full rounded-md border border-zinc-200 bg-white py-2 pl-3 pr-12 text-sm text-zinc-900 shadow-sm outline-none ring-offset-white placeholder:text-zinc-500 focus-visible:ring-2 focus-visible:ring-amber-400/60 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-offset-zinc-950"
+              />
+              <Button
+                type="submit"
+                disabled={!input.trim() || busy}
+                className="absolute right-0 top-0 h-10 w-10 rounded-md bg-gradient-to-r from-amber-500 to-orange-500 p-0 text-center leading-10 text-white shadow-md shadow-amber-200/50 hover:from-amber-600 hover:to-orange-600 dark:shadow-amber-900/30"
+                aria-label="Send message"
+              >
+                {busy ? (
+                  <Loader2 className="inline-block h-4 w-4 animate-spin align-middle" />
+                ) : (
+                  <Send className="inline-block h-4 w-4 align-middle" />
+                )}
+              </Button>
             </form>
           </div>
-        </aside>
+        </div>
       </div>
-    </>
+    </Fragment>
   );
 };
 
