@@ -29,20 +29,21 @@ const CategoryPage: React.FC<CategoryPageProps> = async ({
   params, 
   searchParams
 }) => {
-  const [products, sizes, colors, category] = await Promise.all([
-    getProducts({ 
-      categoryId: params.categoryId,
-      colorId: searchParams.colorId,
-      sizeId: searchParams.sizeId,
-    }),
-    getSizes(),
-    getColors(),
-    getCategory(params.categoryId),
-  ]);
+  const category = await getCategory(params.categoryId);
 
   if (!category) {
     notFound();
   }
+
+  // Keep catalog requests serialized so the storefront does not overwhelm
+  // the admin API's very small Postgres connection budget on Vercel.
+  const products = await getProducts({ 
+    categoryId: params.categoryId,
+    colorId: searchParams.colorId,
+    sizeId: searchParams.sizeId,
+  });
+  const sizes = await getSizes();
+  const colors = await getColors();
 
   return (
     <div className="bg-white">
