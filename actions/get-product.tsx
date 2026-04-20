@@ -1,15 +1,19 @@
 import { normalizeProduct } from "@/lib/catalog/normalize-product";
+import { getStoreApiRoot } from "@/lib/get-store-api-root";
 import type { Product } from "@/types";
 
-const URL = `${process.env.NEXT_PUBLIC_API_URL}/products`;
+const getProduct = async (id: string): Promise<Product | null> => {
+  const root = getStoreApiRoot();
+  if (!root) return null;
 
-const getProduct = async (id: string): Promise<Product> => {
-  const res = await fetch(`${URL}/${id}`, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error("Failed to fetch product");
+  try {
+    const res = await fetch(`${root}/products/${id}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return normalizeProduct(json);
+  } catch {
+    return null;
   }
-  const json = await res.json();
-  return normalizeProduct(json);
 };
 
 export default getProduct;

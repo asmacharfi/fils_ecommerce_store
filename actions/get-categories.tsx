@@ -1,11 +1,18 @@
+import { getStoreApiRoot } from "@/lib/get-store-api-root";
 import { Category } from "@/types";
 
-const URL=`${process.env.NEXT_PUBLIC_API_URL}/categories`;
-
 const getCategories = async (): Promise<Category[]> => {
-  const res = await fetch(URL, { cache: "no-store" });
+  const root = getStoreApiRoot();
+  if (!root) return [];
 
-  return res.json();
+  try {
+    const res = await fetch(`${root}/categories`, { cache: "no-store" });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
 };
 
 export default getCategories;

@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+
 import ProductList from "@/components/product-list";
 import ProductDetailClient from "@/components/product-detail-client";
 import getProduct from "@/actions/get-product";
@@ -16,7 +18,7 @@ const ProductPage: React.FC<ProductPageProps> = async ({ params }) => {
   const product = await getProduct(params.productId);
 
   if (!product) {
-    return null;
+    notFound();
   }
 
   const suggestedProducts = await getProducts({

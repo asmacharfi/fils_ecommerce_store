@@ -1,6 +1,7 @@
 import qs from "query-string";
 
 import { normalizeProducts } from "@/lib/catalog/normalize-product";
+import { getStoreApiRoot } from "@/lib/get-store-api-root";
 import type { Product } from "@/types";
 
 export type StoreCatalogQuery = {
@@ -17,13 +18,11 @@ export type StoreCatalogQuery = {
 export async function fetchStoreProducts(
   query: StoreCatalogQuery = {}
 ): Promise<Product[]> {
-  const base = process.env.NEXT_PUBLIC_API_URL;
-  if (!base) {
-    throw new Error("NEXT_PUBLIC_API_URL is not configured");
-  }
+  const root = getStoreApiRoot();
+  if (!root) return [];
 
   const url = qs.stringifyUrl({
-    url: `${base}/products`,
+    url: `${root}/products`,
     query: {
       colorId: query.colorId,
       sizeId: query.sizeId,
@@ -33,11 +32,12 @@ export async function fetchStoreProducts(
     },
   });
 
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error("Failed to fetch products");
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return normalizeProducts(data);
+  } catch {
+    return [];
   }
-
-  const data = await res.json();
-  return normalizeProducts(data);
 }

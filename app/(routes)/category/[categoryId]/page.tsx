@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 
 import Container from '@/components/ui/container';
 import Billboard from '@/components/ui/billboard';
@@ -38,6 +39,10 @@ const CategoryPage: React.FC<CategoryPageProps> = async ({
     getColors(),
     getCategory(params.categoryId),
   ]);
+
+  if (!category) {
+    notFound();
+  }
 
   return (
     <div className="bg-white">

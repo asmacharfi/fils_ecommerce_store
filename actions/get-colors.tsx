@@ -1,11 +1,18 @@
+import { getStoreApiRoot } from "@/lib/get-store-api-root";
 import { Color } from "@/types";
 
-const URL=`${process.env.NEXT_PUBLIC_API_URL}/colors`;
-
 const getColors = async (): Promise<Color[]> => {
-  const res = await fetch(URL, { cache: "no-store" });
+  const root = getStoreApiRoot();
+  if (!root) return [];
 
-  return res.json();
+  try {
+    const res = await fetch(`${root}/colors`, { cache: "no-store" });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
 };
 
 export default getColors;
