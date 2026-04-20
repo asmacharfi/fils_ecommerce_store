@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import Gallery from "@/components/gallery";
 import Info, { SimpleProductInfo } from "@/components/info";
+import { galleryImagesForColor } from "@/lib/catalog/gallery-images";
 import { isSimpleCatalogProduct } from "@/lib/catalog/cart-variant";
 import type { Color, Product, ProductVariant, Size } from "@/types";
 
@@ -61,10 +62,10 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ product, layo
     [product.variants, selectedColorId, selectedSizeId]
   );
 
-  const galleryImages = useMemo(() => {
-    const filtered = product.images.filter((img) => !img.colorId || img.colorId === selectedColorId);
-    return filtered.length ? filtered : product.images;
-  }, [product.images, selectedColorId]);
+  const galleryImages = useMemo(
+    () => galleryImagesForColor(product.images, selectedColorId),
+    [product.images, selectedColorId]
+  );
 
   const onSelectColor = (colorId: string) => {
     setSelectedColorId(colorId);

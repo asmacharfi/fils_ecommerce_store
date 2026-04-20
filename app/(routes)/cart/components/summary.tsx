@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 
 import Button from "@/components/ui/button";
@@ -11,19 +11,38 @@ import useCart from "@/hooks/use-cart";
 
 const Summary = () => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const items = useCart((state) => state.items);
   const removeAll = useCart((state) => state.removeAll);
 
   useEffect(() => {
-    if (searchParams.get("success")) {
-      toast.success("Payment completed.");
-      removeAll();
-    }
-
     if (searchParams.get("canceled")) {
       toast.error("Something went wrong.");
+      return;
     }
-  }, [searchParams, removeAll]);
+
+    if (!searchParams.get("success")) return;
+
+    const sessionId = searchParams.get("session_id");
+    const dedupeKey = sessionId ? `checkout-return:${sessionId}` : "checkout-return:legacy";
+    try {
+      if (typeof window !== "undefined" && sessionStorage.getItem(dedupeKey)) return;
+      if (typeof window !== "undefined") sessionStorage.setItem(dedupeKey, "1");
+    } catch {
+      // sessionStorage unavailable
+    }
+
+    toast.success("Payment completed.");
+    removeAll();
+    router.refresh();
+
+    const base = process.env.NEXT_PUBLIC_API_URL;
+    if (sessionId && base) {
+      void axios.post(`${base}/checkout/confirm`, { sessionId }).catch(() => {
+        /* Webhook may still mark paid; avoid noisy toast */
+      });
+    }
+  }, [searchParams, removeAll, router]);
 
   const totalPrice = items.reduce((total, line) => {
     return total + Number(line.product.price) * line.quantity;

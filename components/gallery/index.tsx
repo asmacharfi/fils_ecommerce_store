@@ -3,6 +3,7 @@
 import NextImage from "next/image";
 import { Tab } from "@headlessui/react";
 
+import { galleryTabGroupKey } from "@/lib/catalog/gallery-images";
 import { Image } from "@/types";
 
 import GalleryTab from "./gallery-tab";
@@ -11,11 +12,9 @@ interface GalleryProps {
   images: Image[];
 }
 
-const Gallery: React.FC<GalleryProps> = ({
-  images = []
-}) => {
-  return ( 
-    <Tab.Group as="div" className="flex flex-col-reverse">
+const Gallery: React.FC<GalleryProps> = ({ images = [] }) => {
+  return (
+    <Tab.Group key={galleryTabGroupKey(images)} as="div" className="flex flex-col-reverse">
       <div className="mx-auto mt-6 hidden w-full max-w-2xl sm:block lg:max-w-none">
         <Tab.List className="grid grid-cols-4 gap-6">
           {images.map((image) => (
