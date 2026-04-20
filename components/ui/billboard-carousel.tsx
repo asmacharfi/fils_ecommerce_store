@@ -56,6 +56,8 @@ const BillboardCarousel: React.FC<BillboardCarouselProps> = ({ items }) => {
               alt={product.name}
               fill
               priority={index === 0}
+              loading={index === 0 ? "eager" : "lazy"}
+              sizes="(min-width: 768px) 100vw, 100vw"
               className="object-cover"
             />
             <div className="absolute inset-0 bg-black/45" />

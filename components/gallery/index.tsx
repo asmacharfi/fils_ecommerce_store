@@ -31,6 +31,7 @@ const Gallery: React.FC<GalleryProps> = ({
                 fill
                 src={image.url}
                 alt="Image"
+                sizes="(min-width: 1024px) 50vw, 100vw"
                 className="object-cover object-center"
               />
             </div>

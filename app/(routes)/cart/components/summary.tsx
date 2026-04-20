@@ -37,10 +37,11 @@ const Summary = () => {
     }
 
     const payload = {
-      items: items.map((line) => ({
-        productId: line.product.id,
-        quantity: line.quantity,
-      })),
+      items: items.map((line) =>
+        line.variantId
+          ? { variantId: line.variantId, quantity: line.quantity }
+          : { productId: line.product.id, quantity: line.quantity }
+      ),
     };
 
     try {

@@ -1,0 +1,16 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "fils_ecommerce_store"
+    },
+    {
+      "path": "../fils_ecommerce_admin",
+      "name": "fils_ecommerce_admin"
+    }
+  ],
+  "settings": {
+    "prisma.pinToPrisma6": true,
+    "prisma.hidePrisma6Prompts": true
+  }
+}

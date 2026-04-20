@@ -11,13 +11,13 @@ import useCart from "@/hooks/use-cart";
 const NavbarActions = () => {
   const [isMounted, setIsMounted] = useState(false);
   const { isOpen, openChat } = useAIChatPanel();
+  const itemCount = useCart((state) => state.items.reduce((n, line) => n + line.quantity, 0));
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
   const router = useRouter();
-  const cart = useCart();
 
   if (!isMounted) {
     return null;
@@ -41,7 +41,7 @@ const NavbarActions = () => {
           color="white"
         />
         <span className="ml-2 text-sm font-medium text-white">
-          {cart.items.reduce((n, line) => n + line.quantity, 0)}
+          {itemCount}
         </span>
       </Button>
     </div>

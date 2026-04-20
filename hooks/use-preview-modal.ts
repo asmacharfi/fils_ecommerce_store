@@ -13,7 +13,7 @@ const usePreviewModal = create<PreviewModalStore>((set) => ({
   isOpen: false,
   data: undefined,
   onOpen: (data: Product) => set({ isOpen: true, data }),
-  onClose: () => set({ isOpen: false }),
+  onClose: () => set({ isOpen: false, data: undefined }),
 }));
 
 export default usePreviewModal;

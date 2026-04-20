@@ -6,8 +6,10 @@ import Container from "@/components/ui/container";
 export const revalidate = 0;
 
 const HomePage = async () => {
-  const products = await getProducts({ isFeatured: true });
-  const billboardProducts = await getProducts({ isBillboard: true });
+  const [products, billboardProducts] = await Promise.all([
+    getProducts({ isFeatured: true }),
+    getProducts({ isBillboard: true }),
+  ]);
 
   return (
     <Container>

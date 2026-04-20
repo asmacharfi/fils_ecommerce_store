@@ -28,14 +28,16 @@ const CategoryPage: React.FC<CategoryPageProps> = async ({
   params, 
   searchParams
 }) => {
-  const products = await getProducts({ 
-    categoryId: params.categoryId,
-    colorId: searchParams.colorId,
-    sizeId: searchParams.sizeId,
-  });
-  const sizes = await getSizes();
-  const colors = await getColors();
-  const category = await getCategory(params.categoryId);
+  const [products, sizes, colors, category] = await Promise.all([
+    getProducts({ 
+      categoryId: params.categoryId,
+      colorId: searchParams.colorId,
+      sizeId: searchParams.sizeId,
+    }),
+    getSizes(),
+    getColors(),
+    getCategory(params.categoryId),
+  ]);
 
   return (
     <div className="bg-white">

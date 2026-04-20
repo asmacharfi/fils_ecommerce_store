@@ -25,6 +25,9 @@ const getProducts = async (query: Query): Promise<Product[]> => {
   });
 
   const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error("Failed to fetch products");
+  }
   const json = await res.json();
   return normalizeProducts(json);
 };
