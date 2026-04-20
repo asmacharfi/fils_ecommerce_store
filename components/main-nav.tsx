@@ -1,19 +1,44 @@
 "use client";
 
 import Link from "next/link"
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils"
 import { Category } from "@/types";
 
-interface MainNavProps {
-  data: Category[];
-}
-
-const MainNav: React.FC<MainNavProps> = ({
-  data
-}) => {
+const MainNav: React.FC = () => {
   const pathname = usePathname();
+  const [data, setData] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+    if (!apiUrl) return;
+
+    let isMounted = true;
+
+    const loadCategories = async () => {
+      try {
+        const response = await fetch(`${apiUrl.replace(/\/$/, "")}/categories`, {
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+
+        const json = await response.json();
+        if (isMounted && Array.isArray(json)) {
+          setData(json);
+        }
+      } catch {
+        // Keep the nav usable even if the catalog API is temporarily unavailable.
+      }
+    };
+
+    void loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const routes = data.map((route) => ({
     href: `/category/${route.id}`,
