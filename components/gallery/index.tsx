@@ -13,6 +13,14 @@ interface GalleryProps {
 }
 
 const Gallery: React.FC<GalleryProps> = ({ images = [] }) => {
+  if (!images.length) {
+    return (
+      <div className="flex aspect-square w-full items-center justify-center rounded-lg bg-neutral-100 text-sm text-neutral-500">
+        No product images yet.
+      </div>
+    );
+  }
+
   return (
     <Tab.Group key={galleryTabGroupKey(images)} as="div" className="flex flex-col-reverse">
       <div className="mx-auto mt-6 hidden w-full max-w-2xl sm:block lg:max-w-none">

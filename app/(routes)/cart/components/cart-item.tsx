@@ -19,17 +19,22 @@ const CartItem: React.FC<CartItemProps> = ({ data }) => {
   const stock = cartLineStock(data);
   const lineTotal = Number(product.price) * quantity;
   const showLow = stock > 0 && stock < 5;
+  const thumbUrl = product.images[0]?.url?.trim();
 
   return (
     <li className="flex border-b py-6">
-      <div className="relative h-24 w-24 overflow-hidden rounded-md sm:h-48 sm:w-48">
-        <Image
-          fill
-          src={product.images[0]?.url ?? ""}
-          alt=""
-          sizes="(min-width: 640px) 12rem, 6rem"
-          className="object-cover object-center"
-        />
+      <div className="relative h-24 w-24 overflow-hidden rounded-md bg-neutral-100 sm:h-48 sm:w-48">
+        {thumbUrl ? (
+          <Image
+            fill
+            src={thumbUrl}
+            alt=""
+            sizes="(min-width: 640px) 12rem, 6rem"
+            className="object-cover object-center"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-[10px] text-neutral-400">No image</div>
+        )}
       </div>
       <div className="relative ml-4 flex flex-1 flex-col justify-between sm:ml-6">
         <div className="absolute right-0 top-0 z-10">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 import Container from '@/components/ui/container';
 import useCart from '@/hooks/use-cart';
@@ -36,7 +36,16 @@ const CartPage = () => {
                 ))}
               </ul>
             </div>
-            <Summary />
+            <Suspense
+              fallback={
+                <div className="mt-16 rounded-lg bg-gray-50 px-4 py-6 sm:p-6 lg:col-span-5 lg:mt-0 lg:p-8">
+                  <h2 className="text-lg font-medium text-gray-900">Order summary</h2>
+                  <p className="mt-4 text-sm text-neutral-500">Loading…</p>
+                </div>
+              }
+            >
+              <Summary />
+            </Suspense>
           </div>
         </div>
       </Container>

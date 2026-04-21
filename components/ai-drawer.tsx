@@ -19,7 +19,9 @@ import Button from "@/components/ui/button";
 import { formatAiChatError, isOpenAIQuotaOrBillingError } from "@/lib/ai/format-chat-error";
 
 function getTextFromParts(message: UIMessage): string {
-  return message.parts
+  const parts = message.parts;
+  if (!Array.isArray(parts)) return "";
+  return parts
     .filter(isTextUIPart)
     .map((p) => p.text)
     .join("");
@@ -207,17 +209,20 @@ const AIDrawer = () => {
                     );
                   }
 
-                  const hasRenderablePart = message.parts.some((part) => {
-                    if (isTextUIPart(part) && part.text.trim()) return true;
-                    if (isToolUIPart(part) && part.type === "tool-searchProducts") return true;
-                    return false;
-                  });
+                  const parts = message.parts;
+                  const hasRenderablePart = Array.isArray(parts)
+                    ? parts.some((part) => {
+                        if (isTextUIPart(part) && part.text.trim()) return true;
+                        if (isToolUIPart(part) && part.type === "tool-searchProducts") return true;
+                        return false;
+                      })
+                    : false;
 
                   if (!hasRenderablePart) return null;
 
                   return (
                     <div key={message.id} className="space-y-3">
-                      {message.parts.map((part, idx) => {
+                      {(parts ?? []).map((part, idx) => {
                         if (isToolUIPart(part) && part.type === "tool-searchProducts") {
                           return (
                             <ToolCallUI

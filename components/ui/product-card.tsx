@@ -41,17 +41,23 @@ const ProductCard: React.FC<ProductCard> = ({ data }) => {
     else if (quickVariant) addOrIncrement(data, quickVariant, 1);
   };
 
+  const imageUrl = data.images?.[0]?.url?.trim();
+
   return (
     <div onClick={handleClick} className="group cursor-pointer space-y-4 rounded-xl border bg-white p-3">
       {/* Image & actions */}
       <div className="relative aspect-square rounded-xl bg-gray-100">
+        {imageUrl ? (
         <Image
-          src={data.images?.[0]?.url}
+          src={imageUrl}
           alt=""
           fill
           sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 100vw"
           className="aspect-square rounded-md object-cover"
         />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-xs text-neutral-400">No image</div>
+        )}
         <div className="absolute bottom-5 w-full px-6 opacity-0 transition group-hover:opacity-100">
           <div className="flex justify-center gap-x-6">
             <IconButton onClick={onPreview} icon={<Expand size={20} className="text-gray-600" />} />
