@@ -3,6 +3,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 
+import { getStoreApiRoot } from "@/lib/get-store-api-root";
+
 interface AIContextValue {
   pageContext: string;
 }
@@ -29,7 +31,7 @@ export const AIProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const apiUrl = getStoreApiRoot();
       if (!apiUrl) {
         if (isMounted) setPageContext("Browsing products.");
         return;

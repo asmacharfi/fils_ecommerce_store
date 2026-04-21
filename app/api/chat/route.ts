@@ -3,6 +3,7 @@ import { createAgentUIStreamResponse } from "ai";
 
 import { getChatModelEnvError } from "@/lib/ai/create-chat-model";
 import { createGuestShoppingAgent } from "@/lib/ai/shopping-agent";
+import { getStoreApiRoot } from "@/lib/get-store-api-root";
 
 export async function POST(req: Request) {
   try {
@@ -11,7 +12,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: modelEnvError }, { status: 500 });
     }
 
-    if (!process.env.NEXT_PUBLIC_API_URL) {
+    if (!getStoreApiRoot()) {
       return NextResponse.json(
         { error: "Product API URL is not configured." },
         { status: 500 }

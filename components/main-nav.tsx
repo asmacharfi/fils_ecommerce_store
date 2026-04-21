@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
+import { getStoreApiRoot } from "@/lib/get-store-api-root";
 import { cn } from "@/lib/utils"
 import { Category } from "@/types";
 
@@ -12,14 +13,14 @@ const MainNav: React.FC = () => {
   const [data, setData] = useState<Category[]>([]);
 
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+    const apiUrl = getStoreApiRoot();
     if (!apiUrl) return;
 
     let isMounted = true;
 
     const loadCategories = async () => {
       try {
-        const response = await fetch(`${apiUrl.replace(/\/$/, "")}/categories`, {
+        const response = await fetch(`${apiUrl}/categories`, {
           cache: "no-store",
         });
         if (!response.ok) return;

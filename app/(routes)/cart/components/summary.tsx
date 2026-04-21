@@ -8,6 +8,7 @@ import { toast } from "react-hot-toast";
 import Button from "@/components/ui/button";
 import Currency from "@/components/ui/currency";
 import useCart from "@/hooks/use-cart";
+import { getStoreApiRoot } from "@/lib/get-store-api-root";
 
 const Summary = () => {
   const searchParams = useSearchParams();
@@ -36,7 +37,7 @@ const Summary = () => {
     removeAll();
     router.refresh();
 
-    const base = process.env.NEXT_PUBLIC_API_URL;
+    const base = getStoreApiRoot();
     if (sessionId && base) {
       void axios.post(`${base}/checkout/confirm`, { sessionId }).catch(() => {
         /* Webhook may still mark paid; avoid noisy toast */
@@ -49,7 +50,7 @@ const Summary = () => {
   }, 0);
 
   const onCheckout = async () => {
-    const base = process.env.NEXT_PUBLIC_API_URL;
+    const base = getStoreApiRoot();
     if (!base) {
       toast.error("Store API is not configured.");
       return;
