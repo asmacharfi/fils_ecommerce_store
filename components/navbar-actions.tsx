@@ -23,8 +23,8 @@ const NavbarActions = () => {
     return null;
   }
 
-  return ( 
-    <div className="ml-auto flex items-center gap-x-3 sm:gap-x-4">
+  return (
+    <div className="flex items-center gap-x-3 sm:gap-x-4">
       {!isOpen && (
         <button
           type="button"
