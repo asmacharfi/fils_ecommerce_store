@@ -38,10 +38,14 @@ export function ToolCallUI({ toolPart }: ToolCallUIProps) {
     toolPart.state === "input-available" ||
     toolPart.state === "output-available" ||
     toolPart.state === "output-error"
-      ? (toolPart.input as { query?: string } | undefined)
+      ? (toolPart.input as { query?: string; maxPrice?: number; minPrice?: number } | undefined)
       : undefined;
 
   const searchQuery = input?.query ? String(input.query) : undefined;
+  const maxPrice =
+    typeof input?.maxPrice === "number" && Number.isFinite(input.maxPrice) ? input.maxPrice : undefined;
+  const minPrice =
+    typeof input?.minPrice === "number" && Number.isFinite(input.minPrice) ? input.minPrice : undefined;
 
   const productResult =
     toolPart.state === "output-available" ? (toolPart.output as SearchProductsOutput | undefined) : undefined;
@@ -87,11 +91,16 @@ export function ToolCallUI({ toolPart }: ToolCallUIProps) {
               >
                 {isComplete ? `${displayName} complete` : `${displayName}…`}
               </span>
-              {searchQuery ? (
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Query: &quot;{searchQuery}&quot;
-                </span>
-              ) : null}
+              {(() => {
+                const bits: string[] = [];
+                if (searchQuery) bits.push(`Query: "${searchQuery}"`);
+                if (minPrice != null) bits.push(`Min $${minPrice}`);
+                if (maxPrice != null) bits.push(`Max $${maxPrice}`);
+                if (!bits.length) return null;
+                return (
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">{bits.join(" · ")}</span>
+                );
+              })()}
             </div>
           )}
         </div>

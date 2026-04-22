@@ -18,7 +18,12 @@ const searchProductsInputSchema = z.object({
   colorId: z.string().optional().describe("Filter by color id when relevant."),
   sizeId: z.string().optional().describe("Filter by size id when relevant."),
   minPrice: z.number().optional().describe("Minimum numeric price."),
-  maxPrice: z.number().optional().describe("Maximum numeric price."),
+  maxPrice: z
+    .number()
+    .optional()
+    .describe(
+      "Maximum numeric price in store currency. For vague cheap or budget requests without a number, use 100."
+    ),
   excludeProductId: z
     .string()
     .optional()
@@ -46,6 +51,109 @@ export type SearchProductsOutput = {
 function priceNumber(product: Product): number {
   const n = Number(product.price);
   return Number.isFinite(n) ? n : 0;
+}
+
+/** Default ceiling when the shopper asks for “cheap” etc. without naming a product keyword. */
+const DEFAULT_CHEAP_MAX_PRICE = 100;
+
+const PRICE_SIGNAL_WORDS = new Set([
+  "cheap",
+  "cheaper",
+  "cheapest",
+  "inexpensive",
+  "affordable",
+  "budget",
+]);
+
+const PRICE_ONLY_STOP_TOKENS = new Set([
+  ...Array.from(PRICE_SIGNAL_WORDS),
+  "low",
+  "lower",
+  "price",
+  "prices",
+  "pricing",
+  "under",
+  "below",
+  "less",
+  "than",
+  "around",
+  "about",
+  "show",
+  "find",
+  "get",
+  "give",
+  "see",
+  "list",
+  "recommend",
+  "suggest",
+  "want",
+  "need",
+  "please",
+  "help",
+  "me",
+  "us",
+  "i",
+  "the",
+  "a",
+  "an",
+  "some",
+  "any",
+  "all",
+  "for",
+  "to",
+  "in",
+  "with",
+  "my",
+  "your",
+  "our",
+  "products",
+  "product",
+  "items",
+  "item",
+  "goods",
+  "options",
+  "option",
+  "deals",
+  "deal",
+  "stuff",
+  "things",
+  "picks",
+  "selection",
+  "what",
+  "which",
+  "are",
+  "is",
+  "do",
+  "can",
+  "could",
+  "would",
+  "looking",
+  "shop",
+  "buy",
+  "browse",
+  "range",
+  "tier",
+  "entry",
+  "level",
+  "good",
+  "best",
+  "nice",
+  "great",
+]);
+
+function tokenizeWords(raw: string): string[] {
+  return raw.toLowerCase().match(/[a-z0-9]+/g) ?? [];
+}
+
+/** True when query is only generic price/shopping words (no product name tokens). */
+function isPriceOnlyShoppingQuery(raw: string): boolean {
+  const words = tokenizeWords(raw);
+  if (words.length === 0) return false;
+  for (const w of words) {
+    if (/^\d+$/.test(w)) return false;
+    if (!PRICE_ONLY_STOP_TOKENS.has(w)) return false;
+  }
+  return true;
 }
 
 /** Counts overlapping alphanumeric tokens (length >= 3) between anchor and candidate name. */
@@ -89,16 +197,41 @@ export const searchProductsTool = tool({
 
       let products = baseList.filter((p) => !(p as { isArchived?: boolean }).isArchived);
 
-      const q = query.trim().toLowerCase();
+      let nameQuery = query.trim();
+      let effectiveMinPrice = minPrice;
+      let effectiveMaxPrice = maxPrice;
+
+      if (nameQuery && isPriceOnlyShoppingQuery(nameQuery)) {
+        nameQuery = "";
+        if (typeof effectiveMaxPrice !== "number") {
+          effectiveMaxPrice = DEFAULT_CHEAP_MAX_PRICE;
+        }
+      } else if (nameQuery) {
+        const words = tokenizeWords(nameQuery);
+        const hasPriceSignal = words.some((w) => PRICE_SIGNAL_WORDS.has(w));
+        const productWords = words.filter(
+          (w) => !PRICE_ONLY_STOP_TOKENS.has(w) && !PRICE_SIGNAL_WORDS.has(w) && !/^\d+$/.test(w)
+        );
+        if (hasPriceSignal && productWords.length > 0) {
+          nameQuery = productWords.join(" ");
+          if (typeof effectiveMaxPrice !== "number") {
+            effectiveMaxPrice = DEFAULT_CHEAP_MAX_PRICE;
+          }
+        }
+      }
+
+      const q = nameQuery.toLowerCase();
       if (q) {
         products = products.filter((p) => p.name.toLowerCase().includes(q));
       }
 
-      if (typeof minPrice === "number") {
-        products = products.filter((p) => priceNumber(p) >= minPrice);
+      if (typeof effectiveMinPrice === "number") {
+        const minP = effectiveMinPrice;
+        products = products.filter((p) => priceNumber(p) >= minP);
       }
-      if (typeof maxPrice === "number") {
-        products = products.filter((p) => priceNumber(p) <= maxPrice);
+      if (typeof effectiveMaxPrice === "number") {
+        const maxP = effectiveMaxPrice;
+        products = products.filter((p) => priceNumber(p) <= maxP);
       }
 
       if (excludeProductId) {
