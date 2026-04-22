@@ -78,7 +78,12 @@ export function SimpleProductInfo({ product }: { product: Product }) {
             </Button>
           )}
         </div>
-        <AskAISimilarButton productName={product.name} />
+        <AskAISimilarButton
+          productId={product.id}
+          productName={product.name}
+          categoryId={product.category.id}
+          categoryName={product.category.name}
+        />
       </div>
     </div>
   );
@@ -228,7 +233,12 @@ const Info: React.FC<InfoProps> = ({
             </Button>
           )}
         </div>
-        <AskAISimilarButton productName={product.name} />
+        <AskAISimilarButton
+          productId={product.id}
+          productName={product.name}
+          categoryId={product.category.id}
+          categoryName={product.category.name}
+        />
       </div>
     </div>
   );

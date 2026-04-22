@@ -94,8 +94,14 @@ function AssistantErrorPanel({
 }
 
 const AIDrawer = () => {
-  const { pageContext } = useAIContext();
-  const { isOpen, closeChat, pendingMessage, clearPendingMessage } = useAIChatPanel();
+  const { pageContext, currentProductContext } = useAIContext();
+  const {
+    isOpen,
+    closeChat,
+    pendingMessage,
+    pendingRequestContext,
+    clearPendingMessage,
+  } = useAIChatPanel();
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -111,10 +117,11 @@ const AIDrawer = () => {
             trigger,
             messageId,
             pageContext,
+            currentProductContext,
           },
         }),
       }),
-    [pageContext]
+    [pageContext, currentProductContext]
   );
 
   const { messages, sendMessage, status, error, stop, clearError } = useChat({
@@ -132,9 +139,21 @@ const AIDrawer = () => {
     if (!isOpen || !pendingMessage || busy) {
       return;
     }
-    void sendMessage({ text: pendingMessage });
+
+    const requestOptions = pendingRequestContext
+      ? { body: { requestContext: pendingRequestContext } }
+      : undefined;
+
+    void sendMessage({ text: pendingMessage }, requestOptions);
     clearPendingMessage();
-  }, [isOpen, pendingMessage, busy, sendMessage, clearPendingMessage]);
+  }, [
+    isOpen,
+    pendingMessage,
+    pendingRequestContext,
+    busy,
+    sendMessage,
+    clearPendingMessage,
+  ]);
 
   const sendFromText = async (raw: string) => {
     const value = raw.trim();

@@ -4,6 +4,12 @@ import { z } from "zod";
 import { fetchStoreProducts } from "@/lib/catalog/fetch-store-products";
 import type { Product } from "@/types";
 
+type SearchProductsToolOptions = {
+  lockedCategoryId?: string;
+  lockedCategoryName?: string;
+  lockedExcludeProductId?: string;
+};
+
 const searchProductsInputSchema = z.object({
   query: z
     .string()
@@ -42,73 +48,94 @@ function priceNumber(product: Product): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-export const searchProductsTool = tool({
-  description:
-    "Search the live product catalog for this store. Use it whenever the shopper wants recommendations, comparisons, filters, or similar items. Call at most once per user turn unless results are empty and broadening filters is clearly needed.",
-  inputSchema: searchProductsInputSchema,
-  execute: async (params): Promise<SearchProductsOutput> => {
-    const {
-      query = "",
-      categoryId,
-      colorId,
-      sizeId,
-      minPrice,
-      maxPrice,
-      excludeProductId,
-      limit = 8,
-    } = params;
-
-    try {
-      const baseList = await fetchStoreProducts({
+export function createSearchProductsTool(
+  options: SearchProductsToolOptions = {}
+) {
+  return tool({
+    description:
+      "Search the live product catalog for this store. Use it whenever the shopper wants recommendations, comparisons, filters, or similar items. Call at most once per user turn unless results are empty and broadening filters is clearly needed.",
+    inputSchema: searchProductsInputSchema,
+    execute: async (params): Promise<SearchProductsOutput> => {
+      const {
+        query = "",
         categoryId,
         colorId,
         sizeId,
-      });
+        minPrice,
+        maxPrice,
+        excludeProductId,
+        limit = 8,
+      } = params;
 
-      let products = baseList.filter((p) => !(p as { isArchived?: boolean }).isArchived);
+      const effectiveCategoryId = options.lockedCategoryId ?? categoryId;
+      const excludedProductIds = new Set(
+        [excludeProductId, options.lockedExcludeProductId].filter(
+          (value): value is string => Boolean(value)
+        )
+      );
+      const filters: SearchProductsInput = {
+        ...params,
+        categoryId: effectiveCategoryId,
+        excludeProductId: options.lockedExcludeProductId ?? excludeProductId,
+      };
 
-      const q = query.trim().toLowerCase();
-      if (q) {
-        products = products.filter((p) => p.name.toLowerCase().includes(q));
-      }
+      try {
+        const baseList = await fetchStoreProducts({
+          categoryId: effectiveCategoryId,
+          colorId,
+          sizeId,
+        });
 
-      if (typeof minPrice === "number") {
-        products = products.filter((p) => priceNumber(p) >= minPrice);
-      }
-      if (typeof maxPrice === "number") {
-        products = products.filter((p) => priceNumber(p) <= maxPrice);
-      }
+        let products = baseList.filter((p) => !(p as { isArchived?: boolean }).isArchived);
 
-      if (excludeProductId) {
-        products = products.filter((p) => p.id !== excludeProductId);
-      }
+        const q = query.trim().toLowerCase();
+        if (q) {
+          products = products.filter((p) => p.name.toLowerCase().includes(q));
+        }
 
-      products = products.slice(0, limit);
+        if (typeof minPrice === "number") {
+          products = products.filter((p) => priceNumber(p) >= minPrice);
+        }
+        if (typeof maxPrice === "number") {
+          products = products.filter((p) => priceNumber(p) <= maxPrice);
+        }
 
-      if (!products.length) {
+        if (excludedProductIds.size > 0) {
+          products = products.filter((p) => !excludedProductIds.has(p.id));
+        }
+
+        products = products.slice(0, limit);
+
+        if (!products.length) {
+          return {
+            found: false,
+            message: options.lockedCategoryId
+              ? "No similar products found in this category."
+              : "No products matched those filters. Suggest broadening the search (different category, fewer filters, or a shorter keyword).",
+            products: [],
+            filters,
+          };
+        }
+
+        return {
+          found: true,
+          message: options.lockedCategoryName
+            ? `Found ${products.length} matching product(s) in ${options.lockedCategoryName}.`
+            : `Found ${products.length} matching product(s).`,
+          products,
+          filters,
+        };
+      } catch (error) {
         return {
           found: false,
           message:
-            "No products matched those filters. Suggest broadening the search (different category, fewer filters, or a shorter keyword).",
+            error instanceof Error ? error.message : "Unable to search the catalog right now.",
           products: [],
-          filters: params,
+          filters,
         };
       }
+    },
+  });
+}
 
-      return {
-        found: true,
-        message: `Found ${products.length} matching product(s).`,
-        products,
-        filters: params,
-      };
-    } catch (error) {
-      return {
-        found: false,
-        message:
-          error instanceof Error ? error.message : "Unable to search the catalog right now.",
-        products: [],
-        filters: params,
-      };
-    }
-  },
-});
+export const searchProductsTool = createSearchProductsTool();
