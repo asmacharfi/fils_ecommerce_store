@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import { getStoreApiRoot } from "@/lib/get-store-api-root";
 
@@ -20,7 +20,6 @@ const formatPrice = (value: string | number | undefined) => {
 
 export const AIProvider = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [pageContext, setPageContext] = useState("Browsing products");
 
   useEffect(() => {
@@ -49,15 +48,9 @@ export const AIProvider = ({ children }: { children: React.ReactNode }) => {
           const response = await fetch(`${apiUrl}/products/${productId}`, { cache: "no-store" });
           if (!response.ok) throw new Error("Failed product context");
           const product = await response.json();
-          const nextContext = [
-            `Viewing product ${product?.name || "Unknown"}.`,
-            `productId: ${product?.id || productId}`,
-            `categoryName: ${product?.category?.name || "General"}`,
-            product?.category?.id ? `categoryId: ${product.category.id}` : null,
-            `price: ${formatPrice(product?.price)}`,
-          ]
-            .filter(Boolean)
-            .join("\n");
+          const nextContext = `Viewing product ${product?.name || "Unknown"} in ${
+            product?.category?.name || "General"
+          } category priced at ${formatPrice(product?.price)}.`;
           if (isMounted) setPageContext(nextContext);
           return;
         } catch {
@@ -68,8 +61,6 @@ export const AIProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (pathname.startsWith("/category/")) {
         const categoryId = pathname.split("/")[2];
-        const colorId = searchParams.get("colorId");
-        const sizeId = searchParams.get("sizeId");
         if (!categoryId) {
           if (isMounted) setPageContext("Browsing a category listing.");
           return;
@@ -79,15 +70,7 @@ export const AIProvider = ({ children }: { children: React.ReactNode }) => {
           const response = await fetch(`${apiUrl}/categories/${categoryId}`, { cache: "no-store" });
           if (!response.ok) throw new Error("Failed category context");
           const category = await response.json();
-          const nextContext = [
-            `Browsing category ${category?.name || "Unknown"} with filtered products.`,
-            `categoryName: ${category?.name || "Unknown"}`,
-            `categoryId: ${category?.id || categoryId}`,
-            colorId ? `activeColorId: ${colorId}` : null,
-            sizeId ? `activeSizeId: ${sizeId}` : null,
-          ]
-            .filter(Boolean)
-            .join("\n");
+          const nextContext = `Browsing category ${category?.name || "Unknown"} with filtered products.`;
           if (isMounted) setPageContext(nextContext);
           return;
         } catch {
@@ -104,7 +87,7 @@ export const AIProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       isMounted = false;
     };
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   const value = useMemo(() => ({ pageContext }), [pageContext]);
 
