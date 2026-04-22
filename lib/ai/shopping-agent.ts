@@ -2,15 +2,15 @@ import { stepCountIs, ToolLoopAgent } from "ai";
 
 import type { ChatViewerProduct } from "@/lib/ai/chat-viewer-product";
 import { createChatLanguageModel } from "@/lib/ai/create-chat-model";
-import { searchProductsTool } from "@/lib/ai/tools/search-products";
+import { createFindSimilarProductsTool, searchProductsTool } from "@/lib/ai/tools/search-products";
 
 const baseInstructions = `You are a friendly shopping assistant for this e-commerce store.
 
 ## Tools
 You have a searchProducts tool backed by the live catalog. Use it whenever the shopper asks for:
 - product ideas, recommendations, or "best" picks
-- items similar to what they are viewing
 - filters like cheap, under a price, category, color, or size
+- If a findSimilarProducts tool is available, use that for "similar to this product" requests on the current product page.
 
 ## Rules
 - Prefer calling searchProducts instead of guessing inventory.
@@ -25,7 +25,7 @@ You have a searchProducts tool backed by the live catalog. Use it whenever the s
 
 function viewerAnchorBlock(viewer: ChatViewerProduct): string {
   const nameLiteral = JSON.stringify(viewer.name);
-  return `\n\n## Product page anchor\n- viewerProductId: ${viewer.id}\n- viewerCategoryId: ${viewer.categoryId}\n- viewerProductName: ${nameLiteral}\nWhen the shopper asks for similar, like, or alternative products and this block is present:\n- Call searchProducts with categoryId = viewerCategoryId, excludeProductId = viewerProductId, similarToName = viewerProductName (same string value), and omit query unless the first call returns zero products and you need a broader keyword retry.\n- Never list the excluded product as a recommendation.`;
+  return `\n\n## Product page anchor\n- viewerProductId: ${viewer.id}\n- viewerCategoryId: ${viewer.categoryId}\n- viewerProductName: ${nameLiteral}\nWhen the shopper asks for similar, like, or alternative products and this block is present:\n- Call findSimilarProducts, not searchProducts.\n- Keep results inside viewerCategoryId.\n- Never list the excluded product as a recommendation.\n- If the shopper adds a style/type hint such as pull, polo, linen, floral, or parfum, pass that word as the optional query to findSimilarProducts.`;
 }
 
 export function createGuestShoppingAgent(
@@ -38,14 +38,16 @@ export function createGuestShoppingAgent(
       : "\n\n## Current page context\nBrowsing the store.";
 
   const viewerBlock = viewerProduct ? viewerAnchorBlock(viewerProduct) : "";
+  const tools = {
+    searchProducts: searchProductsTool,
+    ...(viewerProduct ? { findSimilarProducts: createFindSimilarProductsTool(viewerProduct) } : {}),
+  };
 
   return new ToolLoopAgent({
     id: "guest-shopping-agent",
     model: createChatLanguageModel(),
     instructions: `${baseInstructions}${contextBlock}${viewerBlock}`,
-    tools: {
-      searchProducts: searchProductsTool,
-    },
+    tools,
     stopWhen: stepCountIs(12),
   });
 }

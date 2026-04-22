@@ -9,8 +9,10 @@ import type { SearchProductsOutput } from "@/lib/ai/tools/search-products";
  * Runtime shape for the shopping assistant's search tool in the UI stream.
  * (Default `UIMessage` tool generics do not include our tool name.)
  */
+type CatalogToolName = "tool-searchProducts" | "tool-findSimilarProducts";
+
 export type SearchProductsToolUIPart = {
-  type: "tool-searchProducts";
+  type: CatalogToolName;
   toolCallId: string;
   state:
     | "input-streaming"
@@ -30,7 +32,8 @@ interface ToolCallUIProps {
 }
 
 export function ToolCallUI({ toolPart }: ToolCallUIProps) {
-  const displayName = "Product search";
+  const displayName =
+    toolPart.type === "tool-findSimilarProducts" ? "Similar product search" : "Product search";
   const isComplete =
     toolPart.state === "output-available" || toolPart.state === "output-error";
 

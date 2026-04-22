@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 
+import type { ChatViewerProduct } from "@/lib/ai/chat-viewer-product";
 import { fetchStoreProducts } from "@/lib/catalog/fetch-store-products";
 import type { Product } from "@/types";
 
@@ -171,9 +172,27 @@ function tokenOverlapScore(anchor: string, productName: string): number {
   return score;
 }
 
+function sortAndFilterByAnchor(products: Product[], anchor: string): Product[] {
+  const scored = products.map((product) => ({
+    product,
+    score: tokenOverlapScore(anchor, product.name),
+  }));
+
+  const positiveMatches = scored.filter((entry) => entry.score > 0);
+  const rankedPool = positiveMatches.length > 0 ? positiveMatches : scored;
+
+  rankedPool.sort((a, b) => {
+    const diff = b.score - a.score;
+    if (diff !== 0) return diff;
+    return a.product.name.localeCompare(b.product.name);
+  });
+
+  return rankedPool.map((entry) => entry.product);
+}
+
 export const searchProductsTool = tool({
   description:
-    "Search the live product catalog for this store. Use it whenever the shopper wants recommendations, comparisons, filters, or similar items. Call at most once per user turn unless results are empty and broadening filters is clearly needed.",
+    "Search the live product catalog for this store. Use it for recommendations, comparisons, and filters. When a dedicated similar-products tool is available for the current product page, use that instead for similar-item requests. Call at most once per user turn unless results are empty and broadening filters is clearly needed.",
   inputSchema: searchProductsInputSchema,
   execute: async (params): Promise<SearchProductsOutput> => {
     const {
@@ -240,11 +259,7 @@ export const searchProductsTool = tool({
 
       const anchor = similarToName?.trim();
       if (anchor) {
-        products = [...products].sort((a, b) => {
-          const diff = tokenOverlapScore(anchor, b.name) - tokenOverlapScore(anchor, a.name);
-          if (diff !== 0) return diff;
-          return a.name.localeCompare(b.name);
-        });
+        products = sortAndFilterByAnchor(products, anchor);
       }
 
       products = products.slice(0, limit);
@@ -276,3 +291,85 @@ export const searchProductsTool = tool({
     }
   },
 });
+
+const findSimilarProductsInputSchema = z.object({
+  query: z
+    .string()
+    .optional()
+    .describe(
+      "Optional keyword to narrow results within the current product's category, for example parfum, pull, linen, polo, floral, or oversized."
+    ),
+  limit: z.number().min(1).max(12).optional().default(8),
+});
+
+export function createFindSimilarProductsTool(viewerProduct: ChatViewerProduct) {
+  return tool({
+    description:
+      "Find products similar to the current product page item. This tool is already locked to the current product's category and excludes the current product.",
+    inputSchema: findSimilarProductsInputSchema,
+    execute: async ({
+      query = "",
+      limit = 8,
+    }): Promise<SearchProductsOutput> => {
+      try {
+        const baseList = await fetchStoreProducts({
+          categoryId: viewerProduct.categoryId,
+        });
+
+        let products = baseList.filter((p) => !(p as { isArchived?: boolean }).isArchived);
+        products = products.filter((p) => p.id !== viewerProduct.id);
+
+        const narrowedQuery = query.trim().toLowerCase();
+        if (narrowedQuery) {
+          products = products.filter((p) => p.name.toLowerCase().includes(narrowedQuery));
+        }
+
+        const anchor = query.trim() || viewerProduct.name;
+        products = sortAndFilterByAnchor(products, anchor).slice(0, limit);
+
+        if (!products.length) {
+          return {
+            found: false,
+            message:
+              "No similar products were found in this category. Suggest trying a broader style keyword or browsing the category directly.",
+            products: [],
+            filters: {
+              categoryId: viewerProduct.categoryId,
+              excludeProductId: viewerProduct.id,
+              similarToName: viewerProduct.name,
+              query,
+              limit,
+            },
+          };
+        }
+
+        return {
+          found: true,
+          message: `Found ${products.length} similar product(s) in this category.`,
+          products,
+          filters: {
+            categoryId: viewerProduct.categoryId,
+            excludeProductId: viewerProduct.id,
+            similarToName: viewerProduct.name,
+            query,
+            limit,
+          },
+        };
+      } catch (error) {
+        return {
+          found: false,
+          message:
+            error instanceof Error ? error.message : "Unable to search for similar products right now.",
+          products: [],
+          filters: {
+            categoryId: viewerProduct.categoryId,
+            excludeProductId: viewerProduct.id,
+            similarToName: viewerProduct.name,
+            query,
+            limit,
+          },
+        };
+      }
+    },
+  });
+}

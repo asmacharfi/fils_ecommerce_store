@@ -99,6 +99,7 @@ const AIDrawer = () => {
     useAIChatPanel();
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const queuedViewerProductRef = useRef(pendingViewerProduct ?? viewerProduct);
 
   const transport = useMemo(
     () =>
@@ -112,11 +113,11 @@ const AIDrawer = () => {
             trigger,
             messageId,
             pageContext,
-            viewerProduct: pendingViewerProduct ?? viewerProduct,
+            viewerProduct: queuedViewerProductRef.current ?? viewerProduct,
           },
         }),
       }),
-    [pageContext, pendingViewerProduct, viewerProduct]
+    [pageContext, viewerProduct]
   );
 
   const { messages, sendMessage, status, error, stop, clearError } = useChat({
@@ -131,18 +132,28 @@ const AIDrawer = () => {
   }, [messages, busy]);
 
   useEffect(() => {
+    queuedViewerProductRef.current = pendingViewerProduct ?? viewerProduct;
+  }, [pendingViewerProduct, viewerProduct]);
+
+  useEffect(() => {
     if (!isOpen || !pendingMessage || busy) {
       return;
     }
-    let cancelled = false;
-    void (async () => {
-      await sendMessage({ text: pendingMessage });
-      if (!cancelled) clearPendingMessage();
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [isOpen, pendingMessage, busy, sendMessage, clearPendingMessage]);
+    const nextText = pendingMessage;
+    queuedViewerProductRef.current = pendingViewerProduct ?? viewerProduct;
+    clearPendingMessage();
+    void sendMessage({ text: nextText }).finally(() => {
+      queuedViewerProductRef.current = viewerProduct;
+    });
+  }, [
+    isOpen,
+    pendingMessage,
+    pendingViewerProduct,
+    viewerProduct,
+    busy,
+    sendMessage,
+    clearPendingMessage,
+  ]);
 
   const sendFromText = async (raw: string) => {
     const value = raw.trim();
@@ -221,7 +232,12 @@ const AIDrawer = () => {
                   const hasRenderablePart = Array.isArray(parts)
                     ? parts.some((part) => {
                         if (isTextUIPart(part) && part.text.trim()) return true;
-                        if (isToolUIPart(part) && part.type === "tool-searchProducts") return true;
+                        if (
+                          isToolUIPart(part) &&
+                          (part.type === "tool-searchProducts" || part.type === "tool-findSimilarProducts")
+                        ) {
+                          return true;
+                        }
                         return false;
                       })
                     : false;
@@ -231,7 +247,10 @@ const AIDrawer = () => {
                   return (
                     <div key={message.id} className="space-y-3">
                       {(parts ?? []).map((part, idx) => {
-                        if (isToolUIPart(part) && part.type === "tool-searchProducts") {
+                        if (
+                          isToolUIPart(part) &&
+                          (part.type === "tool-searchProducts" || part.type === "tool-findSimilarProducts")
+                        ) {
                           return (
                             <ToolCallUI
                               key={`${message.id}-${part.toolCallId ?? idx}`}
