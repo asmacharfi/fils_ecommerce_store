@@ -1,9 +1,20 @@
 import { NextResponse } from "next/server";
 import { createAgentUIStreamResponse } from "ai";
 
+import type { ChatViewerProduct } from "@/lib/ai/chat-viewer-product";
 import { getChatModelEnvError } from "@/lib/ai/create-chat-model";
 import { createGuestShoppingAgent } from "@/lib/ai/shopping-agent";
 import { getStoreApiRoot } from "@/lib/get-store-api-root";
+
+function parseChatViewerProduct(input: unknown): ChatViewerProduct | null {
+  if (!input || typeof input !== "object") return null;
+  const o = input as Record<string, unknown>;
+  const id = typeof o.id === "string" ? o.id.trim() : "";
+  const name = typeof o.name === "string" ? o.name.trim() : "";
+  const categoryId = typeof o.categoryId === "string" ? o.categoryId.trim() : "";
+  if (!id || !categoryId) return null;
+  return { id, name, categoryId };
+}
 
 export async function POST(req: Request) {
   try {
@@ -22,12 +33,14 @@ export async function POST(req: Request) {
     const body = (await req.json()) as {
       messages?: unknown[];
       pageContext?: string;
+      viewerProduct?: unknown;
     };
 
     const uiMessages = Array.isArray(body.messages) ? body.messages : [];
     const pageContext = typeof body.pageContext === "string" ? body.pageContext : "";
+    const viewerProduct = parseChatViewerProduct(body.viewerProduct);
 
-    const agent = createGuestShoppingAgent(pageContext);
+    const agent = createGuestShoppingAgent(pageContext, viewerProduct);
 
     return await createAgentUIStreamResponse({
       agent,

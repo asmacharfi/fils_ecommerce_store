@@ -25,6 +25,12 @@ const searchProductsInputSchema = z.object({
     .describe(
       "Exclude this product id (e.g. when the shopper asks for similar items to the one on the page)."
     ),
+  similarToName: z
+    .string()
+    .optional()
+    .describe(
+      "Anchor product name for ranking similar items in the same category (token overlap). Use with categoryId + excludeProductId; leave query empty unless retrying after zero results."
+    ),
   limit: z.number().min(1).max(12).optional().default(8),
 });
 
@@ -42,6 +48,21 @@ function priceNumber(product: Product): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+/** Counts overlapping alphanumeric tokens (length >= 3) between anchor and candidate name. */
+function tokenOverlapScore(anchor: string, productName: string): number {
+  const tokens = anchor.toLowerCase().match(/[a-z0-9]{3,}/g);
+  if (!tokens?.length) return 0;
+  const hay = productName.toLowerCase();
+  let score = 0;
+  const seen = new Set<string>();
+  for (const t of tokens) {
+    if (seen.has(t)) continue;
+    seen.add(t);
+    if (hay.includes(t)) score++;
+  }
+  return score;
+}
+
 export const searchProductsTool = tool({
   description:
     "Search the live product catalog for this store. Use it whenever the shopper wants recommendations, comparisons, filters, or similar items. Call at most once per user turn unless results are empty and broadening filters is clearly needed.",
@@ -55,6 +76,7 @@ export const searchProductsTool = tool({
       minPrice,
       maxPrice,
       excludeProductId,
+      similarToName,
       limit = 8,
     } = params;
 
@@ -81,6 +103,15 @@ export const searchProductsTool = tool({
 
       if (excludeProductId) {
         products = products.filter((p) => p.id !== excludeProductId);
+      }
+
+      const anchor = similarToName?.trim();
+      if (anchor) {
+        products = [...products].sort((a, b) => {
+          const diff = tokenOverlapScore(anchor, b.name) - tokenOverlapScore(anchor, a.name);
+          if (diff !== 0) return diff;
+          return a.name.localeCompare(b.name);
+        });
       }
 
       products = products.slice(0, limit);
