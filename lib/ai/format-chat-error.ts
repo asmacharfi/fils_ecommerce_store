@@ -5,8 +5,12 @@
 export function formatAiChatError(error: Error): string {
   const raw = `${error.message} ${(error as Error & { cause?: unknown }).cause ?? ""}`;
 
-  if (/insufficient_quota|exceeded your current quota|billing/i.test(raw)) {
-    return "Your OpenAI project has no usable credits or billing is not enabled, so the model cannot run.";
+  if (
+    /insufficient_quota|exceeded your current quota|billing|insufficient credits|never purchased credits/i.test(
+      raw
+    )
+  ) {
+    return "The configured AI provider account does not have usable credits or billing enabled, so the assistant cannot run right now.";
   }
 
   if (/invalid_api_key|Incorrect API key/i.test(raw)) {
@@ -24,7 +28,9 @@ export function formatAiChatError(error: Error): string {
   return error.message || "Something went wrong while talking to the assistant.";
 }
 
-export function isOpenAIQuotaOrBillingError(error: Error): boolean {
+export function isQuotaOrBillingError(error: Error): boolean {
   const raw = `${error.message} ${(error as Error & { cause?: unknown }).cause ?? ""}`;
-  return /insufficient_quota|exceeded your current quota|billing/i.test(raw);
+  return /insufficient_quota|exceeded your current quota|billing|insufficient credits|never purchased credits/i.test(
+    raw
+  );
 }

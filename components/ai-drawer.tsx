@@ -16,7 +16,7 @@ import { WelcomeScreen } from "@/components/ai-chat/welcome-screen";
 import { useAIChatPanel } from "@/components/ai-chat-panel-context";
 import { useAIContext } from "@/components/ai-context";
 import Button from "@/components/ui/button";
-import { formatAiChatError, isOpenAIQuotaOrBillingError } from "@/lib/ai/format-chat-error";
+import { formatAiChatError, isQuotaOrBillingError } from "@/lib/ai/format-chat-error";
 
 function getTextFromParts(message: UIMessage): string {
   const parts = message.parts;
@@ -36,7 +36,7 @@ function AssistantErrorPanel({
   onDismiss: () => void;
   onStop: () => void;
 }) {
-  const quota = isOpenAIQuotaOrBillingError(error);
+  const quota = isQuotaOrBillingError(error);
 
   return (
     <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
@@ -45,34 +45,35 @@ function AssistantErrorPanel({
 
       {quota && (
         <div className="mt-3 rounded-lg border border-amber-300/80 bg-white/70 px-3 py-2 text-left text-xs text-zinc-800 dark:border-amber-800 dark:bg-zinc-900/60 dark:text-zinc-200">
-          <p className="font-medium text-zinc-900 dark:text-zinc-100">Fix it (OpenAI)</p>
+          <p className="font-medium text-zinc-900 dark:text-zinc-100">Fix AI provider billing</p>
           <ol className="mt-2 list-decimal space-y-1 pl-4">
             <li>
               Open{" "}
               <a
                 className="font-medium text-amber-800 underline hover:text-amber-900 dark:text-amber-300"
-                href="https://platform.openai.com/account/billing"
+                href="https://openrouter.ai/settings/credits"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Billing
+                OpenRouter credits
               </a>{" "}
-              and add a payment method or buy credits.
+              and make sure the account behind your API key has credits.
             </li>
             <li>
               Confirm an API key at{" "}
               <a
                 className="font-medium text-amber-800 underline hover:text-amber-900 dark:text-amber-300"
-                href="https://platform.openai.com/api-keys"
+                href="https://openrouter.ai/settings/keys"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                API keys
+                OpenRouter keys
               </a>
               .
             </li>
             <li>
-              Set <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">OPENAI_API_KEY</code> in{" "}
+              Set either <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">OPENROUTER_API_KEY</code> or{" "}
+              <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">OPENAI_API_KEY</code> in{" "}
               <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">.env</code> (see{" "}
               <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">.env.example</code>).
             </li>
@@ -95,11 +96,12 @@ function AssistantErrorPanel({
 
 const AIDrawer = () => {
   const { pageContext, viewerProduct } = useAIContext();
-  const { isOpen, closeChat, pendingMessage, pendingViewerProduct, clearPendingMessage } =
+  const { isOpen, closeChat, pendingMessage, pendingMessageId, pendingViewerProduct, clearPendingMessage } =
     useAIChatPanel();
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queuedViewerProductRef = useRef(pendingViewerProduct ?? viewerProduct);
+  const consumedPendingIdRef = useRef(0);
 
   const transport = useMemo(
     () =>
@@ -139,6 +141,10 @@ const AIDrawer = () => {
     if (!isOpen || !pendingMessage || busy) {
       return;
     }
+    if (pendingMessageId === 0 || consumedPendingIdRef.current === pendingMessageId) {
+      return;
+    }
+    consumedPendingIdRef.current = pendingMessageId;
     const nextText = pendingMessage;
     queuedViewerProductRef.current = pendingViewerProduct ?? viewerProduct;
     clearPendingMessage();
@@ -148,6 +154,7 @@ const AIDrawer = () => {
   }, [
     isOpen,
     pendingMessage,
+    pendingMessageId,
     pendingViewerProduct,
     viewerProduct,
     busy,
