@@ -94,7 +94,7 @@ function AssistantErrorPanel({
 }
 
 const AIDrawer = () => {
-  const { pageContext, currentProductContext } = useAIContext();
+  const { pageContext, clientPathname, currentProductContext } = useAIContext();
   const {
     isOpen,
     closeChat,
@@ -117,11 +117,12 @@ const AIDrawer = () => {
             trigger,
             messageId,
             pageContext,
+            clientPathname,
             currentProductContext,
           },
         }),
       }),
-    [pageContext, currentProductContext]
+    [pageContext, clientPathname, currentProductContext]
   );
 
   const { messages, sendMessage, status, error, stop, clearError } = useChat({

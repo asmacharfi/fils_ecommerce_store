@@ -8,6 +8,7 @@ import {
   toCheapestInCategoryRequestContext,
   toSimilarProductsRequestContext,
 } from "@/lib/ai/request-context";
+import { resolveCurrentProductContextFromPathname } from "@/lib/ai/resolve-path-product-context";
 import { createGuestShoppingAgent } from "@/lib/ai/shopping-agent";
 import { getStoreApiRoot } from "@/lib/get-store-api-root";
 
@@ -69,12 +70,17 @@ export async function POST(req: Request) {
       pageContext?: string;
       requestContext?: unknown;
       currentProductContext?: unknown;
+      clientPathname?: string;
     };
 
     const uiMessages = Array.isArray(body.messages) ? body.messages : [];
     const pageContext = typeof body.pageContext === "string" ? body.pageContext : "";
+    const clientPathname = typeof body.clientPathname === "string" ? body.clientPathname : "";
     const explicitRequestContext = parseChatToolRequestContext(body.requestContext);
-    const currentProductContext = parseCurrentProductContext(body.currentProductContext);
+    let currentProductContext = parseCurrentProductContext(body.currentProductContext);
+    if (!currentProductContext && clientPathname) {
+      currentProductContext = await resolveCurrentProductContextFromPathname(clientPathname);
+    }
     const lastUserText = getLastUserMessageText(uiMessages);
 
     let inferredRequestContext = null;

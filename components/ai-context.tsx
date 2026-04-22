@@ -8,11 +8,14 @@ import type { CurrentProductContext } from "@/lib/ai/request-context";
 
 interface AIContextValue {
   pageContext: string;
+  /** Next.js pathname; always in sync (unlike client-fetched product context). */
+  clientPathname: string;
   currentProductContext: CurrentProductContext | null;
 }
 
 const AIContext = createContext<AIContextValue>({
   pageContext: "Browsing products",
+  clientPathname: "",
   currentProductContext: null,
 });
 
@@ -125,8 +128,8 @@ export const AIProvider = ({ children }: { children: React.ReactNode }) => {
   }, [pathname]);
 
   const value = useMemo(
-    () => ({ pageContext, currentProductContext }),
-    [pageContext, currentProductContext]
+    () => ({ pageContext, clientPathname: pathname ?? "", currentProductContext }),
+    [pageContext, pathname, currentProductContext]
   );
 
   return <AIContext.Provider value={value}>{children}</AIContext.Provider>;
