@@ -10,7 +10,7 @@ export function formatAiChatError(error: Error): string {
   }
 
   if (/invalid_api_key|Incorrect API key/i.test(raw)) {
-    return "The OpenAI API key is missing or rejected. Check OPENAI_API_KEY in your environment.";
+    return "The AI API key is missing or rejected. Check OPENAI_API_KEY or OPENROUTER_API_KEY (and AI_PROVIDER) in your environment.";
   }
 
   if (/rate_limit|429|too many requests/i.test(raw)) {
