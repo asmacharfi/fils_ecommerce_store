@@ -3,8 +3,9 @@ import { createAgentUIStreamResponse } from "ai";
 
 import { getChatModelEnvError } from "@/lib/ai/create-chat-model";
 import {
+  parseChatToolRequestContext,
   parseCurrentProductContext,
-  parseSimilarProductsRequestContext,
+  toCheapestInCategoryRequestContext,
   toSimilarProductsRequestContext,
 } from "@/lib/ai/request-context";
 import { createGuestShoppingAgent } from "@/lib/ai/shopping-agent";
@@ -43,6 +44,12 @@ function isSimilarProductsTurn(messageText: string) {
   return /\b(similar|alternatives?)\b/i.test(messageText);
 }
 
+function isCheapProductsTurn(messageText: string) {
+  return /\b(cheap|affordable|budget|inexpensive|bargain|lowest|low|discount|on sale|clearance|deal|deals)\b/i.test(
+    messageText
+  );
+}
+
 export async function POST(req: Request) {
   try {
     const modelEnvError = getChatModelEnvError();
@@ -66,14 +73,18 @@ export async function POST(req: Request) {
 
     const uiMessages = Array.isArray(body.messages) ? body.messages : [];
     const pageContext = typeof body.pageContext === "string" ? body.pageContext : "";
-    const explicitRequestContext = parseSimilarProductsRequestContext(body.requestContext);
+    const explicitRequestContext = parseChatToolRequestContext(body.requestContext);
     const currentProductContext = parseCurrentProductContext(body.currentProductContext);
-    const inferredRequestContext =
-      !explicitRequestContext &&
-      currentProductContext &&
-      isSimilarProductsTurn(getLastUserMessageText(uiMessages))
-        ? toSimilarProductsRequestContext(currentProductContext)
-        : null;
+    const lastUserText = getLastUserMessageText(uiMessages);
+
+    let inferredRequestContext = null;
+    if (!explicitRequestContext && currentProductContext) {
+      if (isSimilarProductsTurn(lastUserText)) {
+        inferredRequestContext = toSimilarProductsRequestContext(currentProductContext);
+      } else if (isCheapProductsTurn(lastUserText)) {
+        inferredRequestContext = toCheapestInCategoryRequestContext(currentProductContext);
+      }
+    }
     const requestContext = explicitRequestContext ?? inferredRequestContext;
 
     const agent = createGuestShoppingAgent(pageContext, requestContext);

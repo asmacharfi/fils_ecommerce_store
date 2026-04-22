@@ -38,10 +38,18 @@ export function ToolCallUI({ toolPart }: ToolCallUIProps) {
     toolPart.state === "input-available" ||
     toolPart.state === "output-available" ||
     toolPart.state === "output-error"
-      ? (toolPart.input as { query?: string } | undefined)
+      ? (toolPart.input as { query?: string; sortBy?: string; maxPrice?: number } | undefined)
       : undefined;
 
   const searchQuery = input?.query ? String(input.query) : undefined;
+  const sortBy = input?.sortBy && input.sortBy !== "default" ? String(input.sortBy) : undefined;
+  const maxPrice = typeof input?.maxPrice === "number" ? input.maxPrice : undefined;
+
+  const filterBits: string[] = [];
+  if (searchQuery) filterBits.push(`Query: "${searchQuery}"`);
+  if (sortBy) filterBits.push(`Sort: ${sortBy}`);
+  if (maxPrice != null) filterBits.push(`Max: ${maxPrice}`);
+  const filterSummary = filterBits.join(" · ");
 
   const productResult =
     toolPart.state === "output-available" ? (toolPart.output as SearchProductsOutput | undefined) : undefined;
@@ -87,10 +95,8 @@ export function ToolCallUI({ toolPart }: ToolCallUIProps) {
               >
                 {isComplete ? `${displayName} complete` : `${displayName}…`}
               </span>
-              {searchQuery ? (
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Query: &quot;{searchQuery}&quot;
-                </span>
+              {filterSummary ? (
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">{filterSummary}</span>
               ) : null}
             </div>
           )}

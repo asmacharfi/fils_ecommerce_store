@@ -239,10 +239,19 @@ const AIDrawer = () => {
 
                   if (!hasRenderablePart) return null;
 
+                  const partList = parts ?? [];
+                  const lastSearchToolIndex = partList.reduce((acc, part, idx) => {
+                    if (isToolUIPart(part) && part.type === "tool-searchProducts") return idx;
+                    return acc;
+                  }, -1);
+
                   return (
                     <div key={message.id} className="space-y-3">
-                      {(parts ?? []).map((part, idx) => {
+                      {partList.map((part, idx) => {
                         if (isToolUIPart(part) && part.type === "tool-searchProducts") {
+                          if (idx !== lastSearchToolIndex) {
+                            return null;
+                          }
                           return (
                             <ToolCallUI
                               key={`${message.id}-${part.toolCallId ?? idx}`}

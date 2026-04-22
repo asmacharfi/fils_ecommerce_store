@@ -4,10 +4,91 @@ import { z } from "zod";
 import { fetchStoreProducts } from "@/lib/catalog/fetch-store-products";
 import type { Product } from "@/types";
 
+/** Word tokens to strip from `query` before name matching; never used as a product name filter on their own. */
+const BUDGET_AND_FILLER = new Set([
+  "cheap",
+  "cheaper",
+  "cheapest",
+  "budget",
+  "affordable",
+  "inexpensive",
+  "product",
+  "products",
+  "item",
+  "items",
+  "thing",
+  "things",
+  "show",
+  "me",
+  "us",
+  "get",
+  "find",
+  "search",
+  "list",
+  "any",
+  "some",
+  "all",
+  "the",
+  "a",
+  "an",
+  "in",
+  "on",
+  "at",
+  "to",
+  "for",
+  "and",
+  "or",
+  "are",
+  "is",
+  "it",
+  "if",
+  "as",
+  "deals",
+  "deal",
+  "low",
+  "lower",
+  "lowest",
+  "discount",
+  "discounted",
+  "sale",
+  "bargain",
+  "under",
+  "below",
+]);
+
+const CHEAP_INTENT = /\b(cheap|cheaper|cheapest|affordable|budget|inexpensive|bargain|lowest|low|discount|on sale|clearance|deal|deals)\b/i;
+
+function tokenizeForNameQuery(input: string): string[] {
+  return input
+    .toLowerCase()
+    .split(/[^a-z0-9]+/i)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Strips price-intent and filler words so "cheap levi jeans" can still match "Levi" in the name.
+ * Returns a normalized substring for `includes` matching, or empty to skip name filter.
+ */
+function nameQueryFromUserQuery(raw: string): string {
+  const tokens = tokenizeForNameQuery(raw);
+  const kept = tokens.filter((t) => !BUDGET_AND_FILLER.has(t));
+  return kept.join(" ").trim();
+}
+
+function hasCheapIntentOnly(raw: string, nameSubquery: string): boolean {
+  const t = raw.trim();
+  if (!t) return false;
+  if (nameSubquery) return false;
+  return CHEAP_INTENT.test(t);
+}
+
 type SearchProductsToolOptions = {
   lockedCategoryId?: string;
   lockedCategoryName?: string;
   lockedExcludeProductId?: string;
+  /** How to label empty results when category is fixed by request context. */
+  strictCategoryEmpty?: "similar" | "cheapest" | "none";
 };
 
 const searchProductsInputSchema = z.object({
@@ -15,7 +96,7 @@ const searchProductsInputSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Free-text match against product names (case-insensitive). Leave empty to only use structured filters."
+      "Product name filter: case-insensitive substring. Do not put only words like 'cheap' or 'budget' here, use sortBy price-asc and maxPrice for budget. Leave empty for broad or price-sorted search."
     ),
   categoryId: z
     .string()
@@ -25,6 +106,12 @@ const searchProductsInputSchema = z.object({
   sizeId: z.string().optional().describe("Filter by size id when relevant."),
   minPrice: z.number().optional().describe("Minimum numeric price."),
   maxPrice: z.number().optional().describe("Maximum numeric price."),
+  sortBy: z
+    .enum(["default", "price-asc", "price-desc"])
+    .optional()
+    .describe(
+      "default: no price ordering. price-asc: lowest price first (for cheap, budget, lowest, affordable). price-desc: highest first."
+    ),
   excludeProductId: z
     .string()
     .optional()
@@ -48,12 +135,26 @@ function priceNumber(product: Product): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+function applySort(
+  products: Product[],
+  sortBy: "default" | "price-asc" | "price-desc" | undefined
+): Product[] {
+  if (!sortBy || sortBy === "default") return products;
+  const copy = [...products];
+  if (sortBy === "price-asc") {
+    copy.sort((a, b) => priceNumber(a) - priceNumber(b));
+  } else {
+    copy.sort((a, b) => priceNumber(b) - priceNumber(a));
+  }
+  return copy;
+}
+
 export function createSearchProductsTool(
   options: SearchProductsToolOptions = {}
 ) {
   return tool({
     description:
-      "Search the live product catalog for this store. Use it whenever the shopper wants recommendations, comparisons, filters, or similar items. Call at most once per user turn unless results are empty and broadening filters is clearly needed.",
+      "Search the live product catalog. For cheap/budget/lowest price, use sortBy: price-asc and maxPrice or minPrice as needed; do not put 'cheap' alone in query. Call at most once per user turn for simple product discovery.",
     inputSchema: searchProductsInputSchema,
     execute: async (params): Promise<SearchProductsOutput> => {
       const {
@@ -63,6 +164,7 @@ export function createSearchProductsTool(
         sizeId,
         minPrice,
         maxPrice,
+        sortBy: sortByParam = "default",
         excludeProductId,
         limit = 8,
       } = params;
@@ -73,8 +175,14 @@ export function createSearchProductsTool(
           (value): value is string => Boolean(value)
         )
       );
+
+      const nameSubquery = nameQueryFromUserQuery(query);
+      const inferredCheapSort =
+        sortByParam === "default" && hasCheapIntentOnly(query, nameSubquery) ? "price-asc" : sortByParam;
+
       const filters: SearchProductsInput = {
         ...params,
+        sortBy: inferredCheapSort,
         categoryId: effectiveCategoryId,
         excludeProductId: options.lockedExcludeProductId ?? excludeProductId,
       };
@@ -88,8 +196,8 @@ export function createSearchProductsTool(
 
         let products = baseList.filter((p) => !(p as { isArchived?: boolean }).isArchived);
 
-        const q = query.trim().toLowerCase();
-        if (q) {
+        if (nameSubquery) {
+          const q = nameSubquery.toLowerCase();
           products = products.filter((p) => p.name.toLowerCase().includes(q));
         }
 
@@ -104,14 +212,22 @@ export function createSearchProductsTool(
           products = products.filter((p) => !excludedProductIds.has(p.id));
         }
 
+        products = applySort(products, inferredCheapSort);
         products = products.slice(0, limit);
 
         if (!products.length) {
+          let message: string;
+          if (options.lockedCategoryId && options.strictCategoryEmpty === "similar") {
+            message = "No similar products found in this category.";
+          } else if (options.lockedCategoryId && options.strictCategoryEmpty === "cheapest") {
+            message = "No products found in this category for those filters.";
+          } else {
+            message =
+              "No products matched those filters. Suggest broadening the search (fewer filters, or a different keyword in query).";
+          }
           return {
             found: false,
-            message: options.lockedCategoryId
-              ? "No similar products found in this category."
-              : "No products matched those filters. Suggest broadening the search (different category, fewer filters, or a shorter keyword).",
+            message,
             products: [],
             filters,
           };

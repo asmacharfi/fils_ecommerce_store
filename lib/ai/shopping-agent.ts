@@ -1,7 +1,11 @@
 import { stepCountIs, ToolLoopAgent } from "ai";
 
 import { createChatLanguageModel } from "@/lib/ai/create-chat-model";
-import type { SimilarProductsRequestContext } from "@/lib/ai/request-context";
+import type {
+  ChatToolRequestContext,
+  CheapestInCategoryRequestContext,
+  SimilarProductsRequestContext,
+} from "@/lib/ai/request-context";
 import {
   createSearchProductsTool,
   searchProductsTool,
@@ -13,7 +17,13 @@ const baseInstructions = `You are a friendly shopping assistant for this e-comme
 You have a searchProducts tool backed by the live catalog. Use it whenever the shopper asks for:
 - product ideas, recommendations, or "best" picks
 - items similar to what they are viewing
-- filters like cheap, under a price, category, color, or size
+- filters like price (cheap, under $X, budget), category, color, or size
+
+## Price and "cheap" requests
+- Words like "cheap", "affordable", "budget", "lowest price", "on sale" are **price intent**, not product name keywords.
+- For those requests, set sortBy to "price-asc" and leave query empty unless the shopper also names a product type or brand in the product title (e.g. a word that would appear in product names).
+- Use maxPrice and minPrice when the shopper gives a number (e.g. "under 50" -> maxPrice: 50).
+- For a single, clear product search, call searchProducts **once** (do not run multiple searches in the same turn unless the shopper asked for a follow-up).
 
 ## Rules
 - Prefer calling searchProducts instead of guessing inventory.
@@ -35,27 +45,58 @@ For this turn:
 - Always exclude product id ${context.productId}.
 - Do not broaden to other categories or product types.
 - If no products are found, say: "No similar products found in this category."
-- Prefer leaving query empty unless the shopper adds an extra constraint such as color, size, or price.`;
+- Prefer leaving query empty unless the shopper adds an extra constraint such as color, size, or a name keyword.`;
+}
+
+function cheapestInCategoryInstructions(context: CheapestInCategoryRequestContext) {
+  return `\n\n## Cheapest in this category
+The shopper is viewing "${context.productName}" in category ${context.categoryName} (${context.categoryId}) and asked for cheap or lowest-priced options in this category.
+
+For this turn:
+- Call searchProducts with categoryId set to ${context.categoryId}, sortBy "price-asc", and query empty unless they also specified a name or brand to match in product titles.
+- Do not filter other categories.
+- If no products are found, say there are no products in this category for those filters.`;
+}
+
+function toolForContext(requestContext: ChatToolRequestContext | null) {
+  if (!requestContext) {
+    return searchProductsTool;
+  }
+  if (requestContext.kind === "similar-products") {
+    return createSearchProductsTool({
+      lockedCategoryId: requestContext.categoryId,
+      lockedCategoryName: requestContext.categoryName,
+      lockedExcludeProductId: requestContext.productId,
+      strictCategoryEmpty: "similar",
+    });
+  }
+  if (requestContext.kind === "cheapest-in-category") {
+    return createSearchProductsTool({
+      lockedCategoryId: requestContext.categoryId,
+      lockedCategoryName: requestContext.categoryName,
+      strictCategoryEmpty: "cheapest",
+    });
+  }
+  return searchProductsTool;
 }
 
 export function createGuestShoppingAgent(
   pageContext: string,
-  requestContext: SimilarProductsRequestContext | null = null
+  requestContext: ChatToolRequestContext | null = null
 ) {
   const contextBlock =
     pageContext.trim().length > 0
       ? `\n\n## Current page context\n${pageContext.trim()}`
       : "\n\n## Current page context\nBrowsing the store.";
-  const requestBlock = requestContext
-    ? similarProductsInstructions(requestContext)
-    : "";
-  const searchTool = requestContext
-    ? createSearchProductsTool({
-        lockedCategoryId: requestContext.categoryId,
-        lockedCategoryName: requestContext.categoryName,
-        lockedExcludeProductId: requestContext.productId,
-      })
-    : searchProductsTool;
+
+  let requestBlock = "";
+  if (requestContext?.kind === "similar-products") {
+    requestBlock = similarProductsInstructions(requestContext);
+  } else if (requestContext?.kind === "cheapest-in-category") {
+    requestBlock = cheapestInCategoryInstructions(requestContext);
+  }
+
+  const searchTool = toolForContext(requestContext);
 
   return new ToolLoopAgent({
     id: "guest-shopping-agent",
