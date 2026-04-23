@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import Container from "@/components/ui/container";
+import { CLERK_UI_ENABLED } from "@/lib/clerk-public";
 import { getBrowserStoreApiRoot } from "@/lib/public-store-api";
 
 type OrderRow = {
@@ -41,7 +42,7 @@ function statusBadgeClass(label: string) {
   return "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100";
 }
 
-export default function AccountOrdersPage() {
+function AccountOrdersClerk() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const [orders, setOrders] = useState<OrderRow[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -188,4 +189,31 @@ export default function AccountOrdersPage() {
       </div>
     </Container>
   );
+}
+
+export default function AccountOrdersPage() {
+  if (!CLERK_UI_ENABLED) {
+    return (
+      <Container>
+        <div className="mx-auto max-w-lg py-16 text-center">
+          <Package className="mx-auto h-12 w-12 text-zinc-400" />
+          <h1 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">Compte indisponible</h1>
+          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            La connexion client n’est pas configurée sur ce déploiement (clé Clerk manquante). Ajoutez{" "}
+            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code> et{" "}
+            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">CLERK_SECRET_KEY</code> sur Vercel puis
+            redéployez.
+          </p>
+          <Link
+            href="/"
+            className="mt-6 inline-flex rounded-md bg-black px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
+          >
+            Retour à l’accueil
+          </Link>
+        </div>
+      </Container>
+    );
+  }
+
+  return <AccountOrdersClerk />;
 }

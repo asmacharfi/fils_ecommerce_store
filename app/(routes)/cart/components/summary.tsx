@@ -10,10 +10,16 @@ import Button from "@/components/ui/button";
 import Currency from "@/components/ui/currency";
 import useCart from "@/hooks/use-cart";
 import { useShopperId } from "@/hooks/use-shopper-id";
+import { CLERK_UI_ENABLED } from "@/lib/clerk-public";
 import { getStoreApiRoot } from "@/lib/get-store-api-root";
 
-const Summary = () => {
-  const { userId, getToken } = useAuth();
+function SummaryInner({
+  userId,
+  getToken,
+}: {
+  userId: string | null | undefined;
+  getToken: () => Promise<string | null>;
+}) {
   const shopperId = useShopperId();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -105,6 +111,18 @@ const Summary = () => {
       </Button>
     </div>
   );
+}
+
+function SummaryWithClerk() {
+  const { userId, getToken } = useAuth();
+  return <SummaryInner userId={userId} getToken={getToken} />;
+}
+
+const Summary = () => {
+  if (!CLERK_UI_ENABLED) {
+    return <SummaryInner userId={null} getToken={async () => null} />;
+  }
+  return <SummaryWithClerk />;
 };
 
 export default Summary;

@@ -1,6 +1,19 @@
 import { SignUp } from "@clerk/nextjs";
 
+import { CLERK_UI_ENABLED } from "@/lib/clerk-public";
+
 export default function SignUpPage() {
+  if (!CLERK_UI_ENABLED) {
+    return (
+      <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-16 text-center">
+        <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Inscription indisponible</h1>
+        <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+          Configurez Clerk sur ce déploiement, puis redéployez.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-[70vh] justify-center px-4 py-16">
       <SignUp

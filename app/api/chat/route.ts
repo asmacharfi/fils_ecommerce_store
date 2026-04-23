@@ -5,6 +5,7 @@ import { createAgentUIStreamResponse } from "ai";
 import type { ChatViewerProduct } from "@/lib/ai/chat-viewer-product";
 import { getChatModelEnvError } from "@/lib/ai/create-chat-model";
 import { createShoppingAgent } from "@/lib/ai/shopping-agent";
+import { isClerkSecretConfigured } from "@/lib/clerk-server";
 import { getStoreApiRoot } from "@/lib/get-store-api-root";
 
 function parseChatViewerProduct(input: unknown): ChatViewerProduct | null {
@@ -49,8 +50,13 @@ export async function POST(req: Request) {
       );
     }
 
-    const { userId, getToken } = auth();
-    const token = await getToken();
+    let userId: string | null = null;
+    let token: string | null = null;
+    if (isClerkSecretConfigured()) {
+      const session = auth();
+      userId = session.userId ?? null;
+      token = await session.getToken();
+    }
 
     const body = (await req.json()) as {
       messages?: unknown[];
@@ -75,7 +81,7 @@ export async function POST(req: Request) {
       shopperId,
       browseSummary,
       cartProductIds,
-      getToken: async () => token,
+      getToken: async () => token ?? null,
     });
 
     return await createAgentUIStreamResponse({

@@ -11,9 +11,9 @@ import type { Product } from "@/types";
 import { normalizeProducts } from "@/lib/catalog/normalize-product";
 import { useShopperId } from "@/hooks/use-shopper-id";
 import useCart from "@/hooks/use-cart";
+import { CLERK_UI_ENABLED } from "@/lib/clerk-public";
 
-export function PersonalizedForYou() {
-  const { getToken } = useAuth();
+function PersonalizedForYouInner({ getToken }: { getToken: () => Promise<string | null> }) {
   const shopperId = useShopperId();
   const cartItems = useCart((s) => s.items);
   const [items, setItems] = useState<Product[] | null>(null);
@@ -71,4 +71,16 @@ export function PersonalizedForYou() {
       <ProductList title="Pour vous" items={items} />
     </div>
   );
+}
+
+function PersonalizedForYouWithClerk() {
+  const { getToken } = useAuth();
+  return <PersonalizedForYouInner getToken={getToken} />;
+}
+
+export function PersonalizedForYou() {
+  if (!CLERK_UI_ENABLED) {
+    return <PersonalizedForYouInner getToken={async () => null} />;
+  }
+  return <PersonalizedForYouWithClerk />;
 }
