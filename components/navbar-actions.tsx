@@ -1,6 +1,6 @@
 "use client";
 
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { ShoppingBag, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,67 @@ import { useAIChatPanel } from "@/components/ai-chat-panel-context";
 import Button from "@/components/ui/button";
 import useCart from "@/hooks/use-cart";
 import { CLERK_UI_ENABLED } from "@/lib/clerk-public";
+
+const AI_BUTTON_CLASS =
+  "inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-2 text-sm font-medium text-white shadow-md shadow-amber-200/50 transition-all hover:from-amber-600 hover:to-orange-600 hover:shadow-lg hover:shadow-amber-300/50 dark:shadow-amber-900/30 dark:hover:shadow-amber-800/40";
+
+function AiChatTrigger({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className={AI_BUTTON_CLASS}>
+      <Sparkles className="h-4 w-4" />
+      Assistant IA
+    </button>
+  );
+}
+
+function CartTrigger({ count, onClick }: { count: number; onClick: () => void }) {
+  return (
+    <Button type="button" onClick={onClick} className="flex items-center rounded-full bg-black px-4 py-2">
+      <ShoppingBag size={20} color="white" />
+      <span className="ml-2 text-sm font-medium text-white">{count}</span>
+    </Button>
+  );
+}
+
+/** Reserves space while Clerk loads so the bar never loses Connexion / account after full-page navigations (e.g. Stripe return). */
+function ClerkAuthSlot() {
+  const { isLoaded, isSignedIn } = useAuth();
+
+  if (!isLoaded) {
+    return (
+      <div
+        className="h-9 min-w-[7rem] shrink-0 animate-pulse rounded-md bg-zinc-200/70 dark:bg-zinc-700/50"
+        aria-busy="true"
+        aria-label="Chargement du compte"
+      />
+    );
+  }
+
+  if (!isSignedIn) {
+    return (
+      <SignInButton mode="modal">
+        <button
+          type="button"
+          className="text-sm font-medium text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-200"
+        >
+          Connexion
+        </button>
+      </SignInButton>
+    );
+  }
+
+  return (
+    <>
+      <Link
+        href="/account/orders"
+        className="max-w-[6rem] truncate text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-200 dark:hover:text-white sm:max-w-none"
+      >
+        Mes commandes
+      </Link>
+      <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "h-9 w-9" } }} />
+    </>
+  );
+}
 
 function NavbarActionsClerkless() {
   const [isMounted, setIsMounted] = useState(false);
@@ -21,26 +82,12 @@ function NavbarActionsClerkless() {
     setIsMounted(true);
   }, []);
 
-  if (!isMounted) {
-    return null;
-  }
+  const cartCount = isMounted ? itemCount : 0;
 
   return (
     <div className="flex items-center gap-x-3 sm:gap-x-4">
-      {!isOpen && (
-        <button
-          type="button"
-          onClick={openChat}
-          className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-2 text-sm font-medium text-white shadow-md shadow-amber-200/50 transition-all hover:from-amber-600 hover:to-orange-600 hover:shadow-lg hover:shadow-amber-300/50 dark:shadow-amber-900/30 dark:hover:shadow-amber-800/40"
-        >
-          <Sparkles className="h-4 w-4" />
-          Assistant IA
-        </button>
-      )}
-      <Button onClick={() => router.push("/cart")} className="flex items-center rounded-full bg-black px-4 py-2">
-        <ShoppingBag size={20} color="white" />
-        <span className="ml-2 text-sm font-medium text-white">{itemCount}</span>
-      </Button>
+      {!isOpen && <AiChatTrigger onClick={openChat} />}
+      <CartTrigger count={cartCount} onClick={() => router.push("/cart")} />
     </div>
   );
 }
@@ -49,52 +96,19 @@ function NavbarActionsWithClerk() {
   const [isMounted, setIsMounted] = useState(false);
   const { isOpen, openChat } = useAIChatPanel();
   const itemCount = useCart((state) => state.items.reduce((n, line) => n + line.quantity, 0));
+  const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  const router = useRouter();
-
-  if (!isMounted) {
-    return null;
-  }
+  const cartCount = isMounted ? itemCount : 0;
 
   return (
     <div className="flex items-center gap-x-3 sm:gap-x-4">
-      <SignedOut>
-        <SignInButton mode="modal">
-          <button
-            type="button"
-            className="text-sm font-medium text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-200"
-          >
-            Connexion
-          </button>
-        </SignInButton>
-      </SignedOut>
-      <SignedIn>
-        <Link
-          href="/account/orders"
-          className="max-w-[6rem] truncate text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-200 dark:hover:text-white sm:max-w-none"
-        >
-          Mes commandes
-        </Link>
-        <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "h-9 w-9" } }} />
-      </SignedIn>
-      {!isOpen && (
-        <button
-          type="button"
-          onClick={openChat}
-          className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-2 text-sm font-medium text-white shadow-md shadow-amber-200/50 transition-all hover:from-amber-600 hover:to-orange-600 hover:shadow-lg hover:shadow-amber-300/50 dark:shadow-amber-900/30 dark:hover:shadow-amber-800/40"
-        >
-          <Sparkles className="h-4 w-4" />
-          Assistant IA
-        </button>
-      )}
-      <Button onClick={() => router.push("/cart")} className="flex items-center rounded-full bg-black px-4 py-2">
-        <ShoppingBag size={20} color="white" />
-        <span className="ml-2 text-sm font-medium text-white">{itemCount}</span>
-      </Button>
+      <ClerkAuthSlot />
+      {!isOpen && <AiChatTrigger onClick={openChat} />}
+      <CartTrigger count={cartCount} onClick={() => router.push("/cart")} />
     </div>
   );
 }

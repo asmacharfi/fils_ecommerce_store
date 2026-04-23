@@ -45,7 +45,8 @@ function SummaryInner({
 
     toast.success("Paiement confirmé.");
     removeAll();
-    router.refresh();
+    // Defer so Clerk can finish loading after a full-page return from Stripe before RSC refresh remounts the tree.
+    setTimeout(() => router.refresh(), 0);
 
     const base = getStoreApiRoot();
     if (sessionId && base) {
