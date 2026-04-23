@@ -10,6 +10,7 @@ const clerk = authMiddleware({
     "/cart(.*)",
     "/category(.*)",
     "/product(.*)",
+    "/account(.*)",
     "/sign-in(.*)",
     "/sign-up(.*)",
     "/api/chat",

@@ -7,16 +7,15 @@ const Navbar = () => {
   return ( 
     <div className="border-b">
       <Container>
-        <div className="relative flex h-16 items-center px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="relative z-10 ml-4 flex gap-x-2 lg:ml-0">
+        {/* Grid avoids center nav overlapping the auth block (common on cart after checkout). */}
+        <div className="grid h-16 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4 sm:gap-3 sm:px-6 lg:px-8">
+          <Link href="/" className="flex shrink-0 items-center gap-x-2">
             <p className="font-bold text-xl">BOUTIQUE</p>
           </Link>
-          <div className="pointer-events-none absolute inset-x-0 flex items-center justify-center">
-            <div className="pointer-events-auto mx-auto min-w-0 max-w-[min(calc(100vw-9rem),36rem)] overflow-x-auto px-1 sm:max-w-[min(calc(100vw-11rem),40rem)]">
-              <MainNav />
-            </div>
+          <div className="flex min-w-0 justify-center overflow-x-auto border-x border-transparent px-1">
+            <MainNav />
           </div>
-          <div className="relative z-20 ml-auto shrink-0">
+          <div className="isolate flex min-w-0 shrink-0 justify-end border-l border-zinc-200/80 bg-white pl-2 dark:border-zinc-700/80 dark:bg-zinc-950 sm:pl-3">
             <NavbarActions />
           </div>
         </div>
