@@ -18,6 +18,7 @@ import { useAIChatPanel } from "@/components/ai-chat-panel-context";
 import { useAIContext } from "@/components/ai-context";
 import Button from "@/components/ui/button";
 import { formatAiChatError, isQuotaOrBillingError } from "@/lib/ai/format-chat-error";
+import { chatRequestGetTokenRef } from "@/lib/chat-clerk-session";
 import { browseHistorySummary, useBrowseHistory } from "@/hooks/use-browse-history";
 import { useShopperId } from "@/hooks/use-shopper-id";
 import useCart from "@/hooks/use-cart";
@@ -120,6 +121,12 @@ const AIDrawer = () => {
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
+        credentials: "include",
+        headers: async (): Promise<Record<string, string>> => {
+          const token = await chatRequestGetTokenRef.current();
+          if (!token) return {};
+          return { Authorization: `Bearer ${token}` };
+        },
         prepareSendMessagesRequest: ({ id, messages, trigger, messageId, body }) => ({
           body: {
             ...body,

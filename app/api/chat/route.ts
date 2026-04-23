@@ -1,3 +1,4 @@
+import { verifyToken } from "@clerk/backend";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { createAgentUIStreamResponse } from "ai";
@@ -36,6 +37,42 @@ function parseCartProductIds(raw: unknown): string[] {
   return out;
 }
 
+/** `/api/chat` is a public route: `auth()` often has no session here. Prefer Bearer from the client (Clerk session JWT). */
+async function resolveClerkSession(req: Request): Promise<{ userId: string | null; token: string | null }> {
+  let userId: string | null = null;
+  let token: string | null = null;
+
+  const header = req.headers.get("authorization");
+  if (header?.toLowerCase().startsWith("bearer ")) {
+    const raw = header.slice(7).trim();
+    const secretKey = process.env.CLERK_SECRET_KEY?.trim();
+    if (raw && secretKey) {
+      try {
+        // @clerk/backend@0.38 VerifyTokenOptions typing is stricter than runtime; options are valid for session JWTs.
+        const payload = await verifyToken(raw, {
+          secretKey,
+          clockSkewInMs: 120_000,
+        } as Parameters<typeof verifyToken>[1]);
+        const sub = typeof payload.sub === "string" ? payload.sub : null;
+        if (sub) {
+          userId = sub;
+          token = raw;
+        }
+      } catch {
+        // ignore invalid bearer
+      }
+    }
+  }
+
+  if (!userId && isClerkSecretConfigured()) {
+    const session = auth();
+    userId = session.userId ?? null;
+    token = token ?? (await session.getToken()) ?? null;
+  }
+
+  return { userId, token };
+}
+
 export async function POST(req: Request) {
   try {
     const modelEnvError = getChatModelEnvError();
@@ -50,13 +87,7 @@ export async function POST(req: Request) {
       );
     }
 
-    let userId: string | null = null;
-    let token: string | null = null;
-    if (isClerkSecretConfigured()) {
-      const session = auth();
-      userId = session.userId ?? null;
-      token = await session.getToken();
-    }
+    const { userId, token } = await resolveClerkSession(req);
 
     const body = (await req.json()) as {
       messages?: unknown[];

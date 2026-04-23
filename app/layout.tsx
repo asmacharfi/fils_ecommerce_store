@@ -2,6 +2,7 @@ import { ClerkProvider } from '@clerk/nextjs'
 import { Urbanist } from 'next/font/google'
 
 import { CLERK_UI_ENABLED } from '@/lib/clerk-public'
+import { ChatSessionTokenBridge } from '@/lib/chat-clerk-session'
 import ModalProvider from '@/providers/modal-provider'
 import ToastProvider from '@/providers/toast-provider'
 import Navbar from '@/components/navbar'
@@ -37,6 +38,7 @@ export default function RootLayout({
               {children}
               <Footer />
             </PageShiftShell>
+            {CLERK_UI_ENABLED ? <ChatSessionTokenBridge /> : null}
             <AIDrawer />
           </AIProvider>
         </AIChatPanelProvider>
