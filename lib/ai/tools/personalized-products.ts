@@ -20,7 +20,7 @@ export function createPersonalizedRecommendationsTool(
       if (!root) {
         return {
           found: false,
-          message: "Catalog is unavailable.",
+          message: "Catalogue indisponible.",
           products: [],
           filters: { limit } as SearchProductsInput,
         };
@@ -46,7 +46,7 @@ export function createPersonalizedRecommendationsTool(
         if (!res.ok) {
           return {
             found: false,
-            message: "Could not load personalized picks.",
+            message: "Impossible de charger les suggestions personnalisées.",
             products: [],
             filters: { limit } as SearchProductsInput,
           };
@@ -57,15 +57,15 @@ export function createPersonalizedRecommendationsTool(
           found: products.length > 0,
           message:
             products.length > 0
-              ? `Here are ${products.length} personalized picks from the live catalog.`
-              : "No personalized matches right now — suggest browsing featured categories.",
+              ? `${products.length} suggestion(s) personnalisée(s) dans le catalogue en direct.`
+              : "Pas de suggestion personnalisée pour l’instant — proposez les catégories à la une.",
           products,
           filters: { limit } as SearchProductsInput,
         };
       } catch {
         return {
           found: false,
-          message: "Network error loading recommendations.",
+          message: "Erreur réseau lors des recommandations.",
           products: [],
           filters: { limit } as SearchProductsInput,
         };

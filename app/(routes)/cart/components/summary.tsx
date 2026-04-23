@@ -22,7 +22,7 @@ const Summary = () => {
 
   useEffect(() => {
     if (searchParams.get("canceled")) {
-      toast.error("Something went wrong.");
+      toast.error("Paiement annulé ou erreur.");
       return;
     }
 
@@ -37,7 +37,7 @@ const Summary = () => {
       // sessionStorage unavailable
     }
 
-    toast.success("Payment completed.");
+    toast.success("Paiement confirmé.");
     removeAll();
     router.refresh();
 
@@ -56,7 +56,7 @@ const Summary = () => {
   const onCheckout = async () => {
     const base = getStoreApiRoot();
     if (!base) {
-      toast.error("Store API is not configured.");
+      toast.error("L’API boutique n’est pas configurée.");
       return;
     }
 
@@ -75,7 +75,7 @@ const Summary = () => {
     try {
       await axios.post(`${base}/products/validate-stock`, { items: lineItems });
     } catch {
-      toast.error("Some items are no longer available in the requested quantity.");
+      toast.error("Certains articles ne sont plus disponibles en cette quantité.");
       return;
     }
 
@@ -86,22 +86,22 @@ const Summary = () => {
       });
       window.location.href = response.data.url;
     } catch {
-      toast.error("Checkout failed. Please try again.");
+      toast.error("Échec du paiement. Réessayez.");
     }
   };
 
   return (
     <div className="mt-16 rounded-lg bg-gray-50 px-4 py-6 sm:p-6 lg:col-span-5 lg:mt-0 lg:p-8">
-      <h2 className="text-lg font-medium text-gray-900">Order summary</h2>
+      <h2 className="text-lg font-medium text-gray-900">Récapitulatif</h2>
       <div className="mt-6 space-y-4">
         <div className="flex items-center justify-between border-t border-gray-200 pt-4">
-          <div className="text-base font-medium text-gray-900">Order total</div>
+          <div className="text-base font-medium text-gray-900">Total</div>
           <Currency value={totalPrice} />
         </div>
       </div>
 
       <Button onClick={onCheckout} disabled={items.length === 0} className="mt-6 w-full">
-        Checkout
+        Payer
       </Button>
     </div>
   );

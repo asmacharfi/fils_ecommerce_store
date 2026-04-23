@@ -9,12 +9,12 @@ interface WelcomeScreenProps {
 }
 
 const productSuggestions = [
-  "Show me cheap products",
-  "What would you recommend for me?",
-  "Best in this category",
+  "Montre-moi des produits pas chers",
+  "Qu’est-ce que tu me recommandes ?",
+  "Les meilleurs articles de cette catégorie",
 ];
 
-/** Storefront assistant welcome — catalog search, personalized picks, orders when signed in. */
+/** Accueil de l’assistant — catalogue, reco perso, commandes si connecté. */
 export function WelcomeScreen({ onSuggestionClick }: WelcomeScreenProps) {
   return (
     <div className="flex h-full min-h-[280px] flex-col items-center justify-center px-4 text-center">
@@ -22,17 +22,17 @@ export function WelcomeScreen({ onSuggestionClick }: WelcomeScreenProps) {
         <Sparkles className="h-8 w-8 text-amber-500" />
       </div>
       <h3 className="mt-4 text-lg font-medium text-zinc-900 dark:text-zinc-100">
-        How can I help you today?
+        Comment puis-je vous aider ?
       </h3>
       <p className="mt-2 max-w-xs text-sm text-zinc-500 dark:text-zinc-400">
-        Search the catalog, get personalized picks from your history and cart, and — when you sign in —
-        check your orders and shipping status.
+        Parcourez le catalogue, obtenez des suggestions selon votre historique et votre panier, et consultez
+        vos commandes une fois connecté·e.
       </p>
 
       <div className="mt-6 w-full max-w-sm">
         <div className="mb-2 flex items-center gap-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
           <Search className="h-3 w-3" />
-          Find products
+          Idées rapides
         </div>
         <div className="flex flex-wrap justify-center gap-2">
           {productSuggestions.map((suggestion) => (
@@ -51,7 +51,8 @@ export function WelcomeScreen({ onSuggestionClick }: WelcomeScreenProps) {
       <div className="mt-6 flex items-start gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-left text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
         <Package className="mt-0.5 h-3.5 w-3.5 shrink-0" />
         <span>
-          Sign in from the header to link purchases to your account and ask the assistant about order status.
+          Connectez-vous depuis l’en-tête pour lier vos achats à votre compte et demander le suivi des
+          commandes à l’assistant.
         </span>
       </div>
     </div>

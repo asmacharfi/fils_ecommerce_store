@@ -29,12 +29,12 @@ export function createGetMyOrdersTool(getToken: () => Promise<string | null>) {
       const root = getStoreApiRoot();
       const token = await getToken();
       if (!root) {
-        return { found: false, message: "Store API is not configured.", orders: [] };
+        return { found: false, message: "API boutique indisponible.", orders: [] };
       }
       if (!token) {
         return {
           found: false,
-          message: "The shopper must sign in to list orders.",
+          message: "Le client doit se connecter pour voir ses commandes.",
           orders: [],
         };
       }
@@ -45,22 +45,22 @@ export function createGetMyOrdersTool(getToken: () => Promise<string | null>) {
           cache: "no-store",
         });
         if (res.status === 401) {
-          return { found: false, message: "Session expired. Please sign in again.", orders: [] };
+          return { found: false, message: "Session expirée. Reconnectez-vous.", orders: [] };
         }
         if (!res.ok) {
-          return { found: false, message: "Could not load orders right now.", orders: [] };
+          return { found: false, message: "Impossible de charger les commandes pour le moment.", orders: [] };
         }
         const data = (await res.json()) as MyOrderRow[];
         if (!Array.isArray(data) || data.length === 0) {
-          return { found: false, message: "No orders yet for this account on this store.", orders: [] };
+          return { found: false, message: "Aucune commande pour ce compte sur cette boutique.", orders: [] };
         }
         return {
           found: true,
-          message: `Found ${data.length} order(s). Summarize status and totals clearly.`,
+          message: `${data.length} commande(s) trouvée(s). Résumez statuts et montants clairement.`,
           orders: data,
         };
       } catch {
-        return { found: false, message: "Network error loading orders.", orders: [] };
+        return { found: false, message: "Erreur réseau lors du chargement des commandes.", orders: [] };
       }
     },
   });

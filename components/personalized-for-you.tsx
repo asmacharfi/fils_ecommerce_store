@@ -68,7 +68,7 @@ export function PersonalizedForYou() {
 
   return (
     <div className="flex flex-col gap-y-8 px-4 sm:px-6 lg:px-8">
-      <ProductList title="Picked for you" items={items} />
+      <ProductList title="Pour vous" items={items} />
     </div>
   );
 }

@@ -223,7 +223,7 @@ const AIDrawer = () => {
               className="truncate pl-6 pr-16 text-base font-semibold leading-[4rem] text-zinc-900 dark:text-zinc-100"
             >
               <Sparkles className="mr-2 inline-block h-5 w-5 align-middle text-amber-500" />
-              Shopping Assistant
+              Assistant d&apos;achat
             </div>
           </header>
 
@@ -334,7 +334,7 @@ const AIDrawer = () => {
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about our products..."
+                placeholder="Posez une question sur les produits…"
                 disabled={busy}
                 className="box-border h-10 w-full rounded-md border border-zinc-200 bg-white py-2 pl-3 pr-12 text-sm text-zinc-900 shadow-sm outline-none ring-offset-white placeholder:text-zinc-500 focus-visible:ring-2 focus-visible:ring-amber-400/60 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-offset-zinc-950"
               />

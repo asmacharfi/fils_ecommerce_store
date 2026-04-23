@@ -37,10 +37,10 @@ interface ToolCallUIProps {
 export function ToolCallUI({ toolPart }: ToolCallUIProps) {
   const displayName =
     toolPart.type === "tool-findSimilarProducts"
-      ? "Similar product search"
+      ? "Recherche de produits similaires"
       : toolPart.type === "tool-getPersonalizedRecommendations"
-        ? "Personalized for you"
-        : "Product search";
+        ? "Suggestions personnalisées"
+        : "Recherche catalogue";
   const isComplete =
     toolPart.state === "output-available" || toolPart.state === "output-error";
 
@@ -99,7 +99,7 @@ export function ToolCallUI({ toolPart }: ToolCallUIProps) {
                     : "text-amber-700 dark:text-amber-300"
                 }`}
               >
-                {isComplete ? `${displayName} complete` : `${displayName}…`}
+                {isComplete ? `${displayName} terminée` : `${displayName}…`}
               </span>
               {(() => {
                 const bits: string[] = [];
@@ -119,7 +119,9 @@ export function ToolCallUI({ toolPart }: ToolCallUIProps) {
       {hasProducts && productResult?.products && (
         <div className="ml-11 mt-2">
           <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-            {productResult.products.length} product{productResult.products.length !== 1 ? "s" : ""} found
+            {productResult.products.length === 1
+              ? "1 produit trouvé"
+              : `${productResult.products.length} produits trouvés`}
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {productResult.products.map((product) => (

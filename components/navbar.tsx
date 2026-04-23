@@ -9,7 +9,7 @@ const Navbar = () => {
       <Container>
         <div className="relative flex h-16 items-center px-4 sm:px-6 lg:px-8">
           <Link href="/" className="relative z-10 ml-4 flex gap-x-2 lg:ml-0">
-            <p className="font-bold text-xl">STORE</p>
+            <p className="font-bold text-xl">BOUTIQUE</p>
           </Link>
           <div className="pointer-events-none absolute inset-x-0 flex items-center justify-center">
             <div className="pointer-events-auto">

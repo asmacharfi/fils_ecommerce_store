@@ -21,7 +21,17 @@ type OrderRow = {
 };
 
 function formatMoney(n: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+  return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "USD" }).format(n);
+}
+
+function formatStatusFr(label: string): string {
+  const map: Record<string, string> = {
+    awaiting_payment: "En attente de paiement",
+    processing: "Préparation",
+    shipped: "Expédiée",
+    delivered: "Livrée",
+  };
+  return map[label] ?? label.replace(/_/g, " ");
 }
 
 function statusBadgeClass(label: string) {
@@ -43,7 +53,7 @@ export default function AccountOrdersPage() {
       const root = getBrowserStoreApiRoot();
       const token = await getToken();
       if (!root || !token) {
-        setLoadError("Store API or session is not available.");
+        setLoadError("API boutique ou session indisponible.");
         setOrders([]);
         return;
       }
@@ -57,7 +67,7 @@ export default function AccountOrdersPage() {
         }
       } catch {
         if (!cancelled) {
-          setLoadError("Could not load your orders.");
+          setLoadError("Impossible de charger vos commandes.");
           setOrders([]);
         }
       }
@@ -83,15 +93,15 @@ export default function AccountOrdersPage() {
       <Container>
         <div className="mx-auto max-w-lg py-16 text-center">
           <Package className="mx-auto h-12 w-12 text-zinc-400" />
-          <h1 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">Sign in required</h1>
+          <h1 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">Connexion requise</h1>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            Create an account or sign in to see your orders and delivery status.
+            Créez un compte ou connectez-vous pour voir vos commandes et leur statut d’expédition.
           </p>
           <Link
             href="/sign-in"
             className="mt-6 inline-flex rounded-md bg-black px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
           >
-            Sign in
+            Se connecter
           </Link>
         </div>
       </Container>
@@ -102,13 +112,13 @@ export default function AccountOrdersPage() {
     <Container>
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">My orders</h1>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Mes commandes</h1>
           <Link href="/" className="text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400">
-            Continue shopping
+            Continuer les achats
           </Link>
         </div>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-          Track payment, preparation, shipping, and delivery for this store.
+          Suivez le paiement, la préparation, l’expédition et la livraison.
         </p>
 
         {orders === null && (
@@ -124,7 +134,7 @@ export default function AccountOrdersPage() {
         )}
 
         {orders && orders.length === 0 && !loadError && (
-          <p className="mt-10 text-center text-sm text-zinc-500 dark:text-zinc-400">No orders yet.</p>
+          <p className="mt-10 text-center text-sm text-zinc-500 dark:text-zinc-400">Aucune commande pour le moment.</p>
         )}
 
         {orders && orders.length > 0 && (
@@ -136,18 +146,18 @@ export default function AccountOrdersPage() {
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="font-mono text-xs text-zinc-500">Order {o.id}</p>
+                    <p className="font-mono text-xs text-zinc-500">Commande {o.id}</p>
                     <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                      {new Date(o.createdAt).toLocaleString()}
+                      {new Date(o.createdAt).toLocaleString("fr-FR")}
                     </p>
                   </div>
                   <div className="text-right">
                     <span
-                      className={`inline-block rounded-full px-3 py-1 text-xs font-medium capitalize ${statusBadgeClass(
+                      className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClass(
                         o.statusLabel
                       )}`}
                     >
-                      {o.statusLabel.replace(/_/g, " ")}
+                      {formatStatusFr(o.statusLabel)}
                     </span>
                     <p className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                       {formatMoney(o.total)}
@@ -157,7 +167,7 @@ export default function AccountOrdersPage() {
 
                 {o.trackingNumber ? (
                   <p className="mt-4 text-sm font-medium text-violet-700 dark:text-violet-300">
-                    Tracking: {o.trackingNumber}
+                    Suivi : {o.trackingNumber}
                   </p>
                 ) : null}
 

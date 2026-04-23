@@ -16,7 +16,7 @@ const HomePage = async () => {
         <BillboardCarousel items={billboardProducts} />
         <div className="flex flex-col gap-y-8 px-4 sm:px-6 lg:px-8">
           <PersonalizedForYou />
-          <ProductList title="Featured Products" items={products} />
+          <ProductList title="À la une" items={products} />
         </div>
       </div>
     </Container>

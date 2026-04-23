@@ -7,6 +7,7 @@ import { createPersonalizedRecommendationsTool } from "@/lib/ai/tools/personaliz
 import { createFindSimilarProductsTool, searchProductsTool } from "@/lib/ai/tools/search-products";
 
 const guestInstructions = `You are a friendly shopping assistant for this e-commerce store.
+Reply in the same language as the shopper (French or English).
 
 ## Tools
 - searchProducts: live catalog search (filters, names, price).

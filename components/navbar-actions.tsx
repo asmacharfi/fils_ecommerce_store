@@ -33,16 +33,16 @@ const NavbarActions = () => {
             type="button"
             className="text-sm font-medium text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-200"
           >
-            Sign in
+            Connexion
           </button>
         </SignInButton>
       </SignedOut>
       <SignedIn>
         <Link
           href="/account/orders"
-          className="max-w-[5.5rem] truncate text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-200 dark:hover:text-white sm:max-w-none"
+          className="max-w-[6rem] truncate text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-200 dark:hover:text-white sm:max-w-none"
         >
-          My orders
+          Mes commandes
         </Link>
         <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "h-9 w-9" } }} />
       </SignedIn>
@@ -53,7 +53,7 @@ const NavbarActions = () => {
           className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-2 text-sm font-medium text-white shadow-md shadow-amber-200/50 transition-all hover:from-amber-600 hover:to-orange-600 hover:shadow-lg hover:shadow-amber-300/50 dark:shadow-amber-900/30 dark:hover:shadow-amber-800/40"
         >
           <Sparkles className="h-4 w-4" />
-          Ask AI
+          Assistant IA
         </button>
       )}
       <Button onClick={() => router.push('/cart')} className="flex items-center rounded-full bg-black px-4 py-2">

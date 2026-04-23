@@ -57,7 +57,7 @@ export function OrdersToolUI({ toolPart }: { toolPart: GetMyOrdersToolUIPart }) 
           )}
           {toolPart.state !== "output-error" && (
             <span className="font-medium text-violet-800 dark:text-violet-200">
-              {isComplete ? "Your orders" : "Loading your orders…"}
+              {isComplete ? "Vos commandes" : "Chargement de vos commandes…"}
             </span>
           )}
         </div>
@@ -72,7 +72,7 @@ export function OrdersToolUI({ toolPart }: { toolPart: GetMyOrdersToolUIPart }) 
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-medium text-zinc-900 dark:text-zinc-100">
-                  Order <span className="font-mono text-xs">{o.id.slice(0, 8)}…</span>
+                  Commande <span className="font-mono text-xs">{o.id.slice(0, 8)}…</span>
                 </span>
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs capitalize text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
                   {o.statusLabel.replace(/_/g, " ")}
@@ -83,7 +83,7 @@ export function OrdersToolUI({ toolPart }: { toolPart: GetMyOrdersToolUIPart }) 
               </p>
               {o.trackingNumber ? (
                 <p className="mt-1 text-xs font-medium text-violet-700 dark:text-violet-300">
-                  Tracking: {o.trackingNumber}
+                  Suivi : {o.trackingNumber}
                 </p>
               ) : null}
               <ul className="mt-2 space-y-0.5 text-xs text-zinc-600 dark:text-zinc-300">
