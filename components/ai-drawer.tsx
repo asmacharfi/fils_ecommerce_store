@@ -11,12 +11,16 @@ import { Bot, Loader2, Send, Sparkles, X } from "lucide-react";
 import { FormEvent, Fragment, useEffect, useMemo, useRef, useState } from "react";
 
 import { MessageBubble } from "@/components/ai-chat/message-bubble";
+import { OrdersToolUI, type GetMyOrdersToolUIPart } from "@/components/ai-chat/orders-tool-ui";
 import { ToolCallUI, type SearchProductsToolUIPart } from "@/components/ai-chat/tool-call-ui";
 import { WelcomeScreen } from "@/components/ai-chat/welcome-screen";
 import { useAIChatPanel } from "@/components/ai-chat-panel-context";
 import { useAIContext } from "@/components/ai-context";
 import Button from "@/components/ui/button";
 import { formatAiChatError, isQuotaOrBillingError } from "@/lib/ai/format-chat-error";
+import { browseHistorySummary, useBrowseHistory } from "@/hooks/use-browse-history";
+import { useShopperId } from "@/hooks/use-shopper-id";
+import useCart from "@/hooks/use-cart";
 
 function getTextFromParts(message: UIMessage): string {
   const parts = message.parts;
@@ -98,10 +102,19 @@ const AIDrawer = () => {
   const { pageContext, viewerProduct } = useAIContext();
   const { isOpen, closeChat, pendingMessage, pendingMessageId, pendingViewerProduct, clearPendingMessage } =
     useAIChatPanel();
+  const shopperId = useShopperId();
+  const browseHits = useBrowseHistory((s) => s.hits);
+  const cartItems = useCart((s) => s.items);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queuedViewerProductRef = useRef(pendingViewerProduct ?? viewerProduct);
   const consumedPendingIdRef = useRef(0);
+
+  const browseSummary = useMemo(() => browseHistorySummary(browseHits), [browseHits]);
+  const cartProductIds = useMemo(
+    () => Array.from(new Set(cartItems.map((line) => line.product.id))),
+    [cartItems]
+  );
 
   const transport = useMemo(
     () =>
@@ -116,10 +129,13 @@ const AIDrawer = () => {
             messageId,
             pageContext,
             viewerProduct: queuedViewerProductRef.current ?? viewerProduct,
+            shopperId: shopperId ?? undefined,
+            browseSummary,
+            cartProductIds,
           },
         }),
       }),
-    [pageContext, viewerProduct]
+    [pageContext, viewerProduct, shopperId, browseSummary, cartProductIds]
   );
 
   const { messages, sendMessage, status, error, stop, clearError } = useChat({
@@ -241,7 +257,10 @@ const AIDrawer = () => {
                         if (isTextUIPart(part) && part.text.trim()) return true;
                         if (
                           isToolUIPart(part) &&
-                          (part.type === "tool-searchProducts" || part.type === "tool-findSimilarProducts")
+                          (part.type === "tool-searchProducts" ||
+                            part.type === "tool-findSimilarProducts" ||
+                            part.type === "tool-getPersonalizedRecommendations" ||
+                            part.type === "tool-getMyOrders")
                         ) {
                           return true;
                         }
@@ -256,12 +275,22 @@ const AIDrawer = () => {
                       {(parts ?? []).map((part, idx) => {
                         if (
                           isToolUIPart(part) &&
-                          (part.type === "tool-searchProducts" || part.type === "tool-findSimilarProducts")
+                          (part.type === "tool-searchProducts" ||
+                            part.type === "tool-findSimilarProducts" ||
+                            part.type === "tool-getPersonalizedRecommendations")
                         ) {
                           return (
                             <ToolCallUI
                               key={`${message.id}-${part.toolCallId ?? idx}`}
                               toolPart={part as SearchProductsToolUIPart}
+                            />
+                          );
+                        }
+                        if (isToolUIPart(part) && part.type === "tool-getMyOrders") {
+                          return (
+                            <OrdersToolUI
+                              key={`${message.id}-${part.toolCallId ?? idx}`}
+                              toolPart={part as GetMyOrdersToolUIPart}
                             />
                           );
                         }

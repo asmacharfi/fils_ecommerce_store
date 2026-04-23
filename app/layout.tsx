@@ -1,3 +1,4 @@
+import { ClerkProvider } from '@clerk/nextjs'
 import { Urbanist } from 'next/font/google'
 
 import ModalProvider from '@/providers/modal-provider'
@@ -24,21 +25,23 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={`${font.className} overflow-x-visible`}>
-        <AIChatPanelProvider>
-          <AIProvider>
-            <PageShiftShell>
-              <ToastProvider />
-              <ModalProvider />
-              <Navbar />
-              {children}
-              <Footer />
-            </PageShiftShell>
-            <AIDrawer />
-          </AIProvider>
-        </AIChatPanelProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className={`${font.className} overflow-x-visible`}>
+          <AIChatPanelProvider>
+            <AIProvider>
+              <PageShiftShell>
+                <ToastProvider />
+                <ModalProvider />
+                <Navbar />
+                {children}
+                <Footer />
+              </PageShiftShell>
+              <AIDrawer />
+            </AIProvider>
+          </AIChatPanelProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }

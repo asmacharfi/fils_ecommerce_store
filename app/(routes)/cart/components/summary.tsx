@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import axios from "axios";
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -8,9 +9,12 @@ import { toast } from "react-hot-toast";
 import Button from "@/components/ui/button";
 import Currency from "@/components/ui/currency";
 import useCart from "@/hooks/use-cart";
+import { useShopperId } from "@/hooks/use-shopper-id";
 import { getStoreApiRoot } from "@/lib/get-store-api-root";
 
 const Summary = () => {
+  const { userId, getToken } = useAuth();
+  const shopperId = useShopperId();
   const searchParams = useSearchParams();
   const router = useRouter();
   const items = useCart((state) => state.items);
@@ -56,23 +60,30 @@ const Summary = () => {
       return;
     }
 
+    const lineItems = items.map((line) =>
+      line.variantId
+        ? { variantId: line.variantId, quantity: line.quantity }
+        : { productId: line.product.id, quantity: line.quantity }
+    );
+
     const payload = {
-      items: items.map((line) =>
-        line.variantId
-          ? { variantId: line.variantId, quantity: line.quantity }
-          : { productId: line.product.id, quantity: line.quantity }
-      ),
+      items: lineItems,
+      ...(shopperId ? { shopperId } : {}),
+      ...(userId ? { clerkUserId: userId } : {}),
     };
 
     try {
-      await axios.post(`${base}/products/validate-stock`, payload);
+      await axios.post(`${base}/products/validate-stock`, { items: lineItems });
     } catch {
       toast.error("Some items are no longer available in the requested quantity.");
       return;
     }
 
     try {
-      const response = await axios.post(`${base}/checkout`, payload);
+      const token = await getToken();
+      const response = await axios.post(`${base}/checkout`, payload, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       window.location.href = response.data.url;
     } catch {
       toast.error("Checkout failed. Please try again.");

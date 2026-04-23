@@ -10,13 +10,11 @@ interface WelcomeScreenProps {
 
 const productSuggestions = [
   "Show me cheap products",
-  "Similar to this product",
+  "What would you recommend for me?",
   "Best in this category",
 ];
 
-/**
- * Guest storefront welcome (reference layout without signed-in order prompts).
- */
+/** Storefront assistant welcome — catalog search, personalized picks, orders when signed in. */
 export function WelcomeScreen({ onSuggestionClick }: WelcomeScreenProps) {
   return (
     <div className="flex h-full min-h-[280px] flex-col items-center justify-center px-4 text-center">
@@ -27,8 +25,8 @@ export function WelcomeScreen({ onSuggestionClick }: WelcomeScreenProps) {
         How can I help you today?
       </h3>
       <p className="mt-2 max-w-xs text-sm text-zinc-500 dark:text-zinc-400">
-        I can help you find products by style, category, or price. Guest mode only — order lookup is not
-        available here.
+        Search the catalog, get personalized picks from your history and cart, and — when you sign in —
+        check your orders and shipping status.
       </p>
 
       <div className="mt-6 w-full max-w-sm">
@@ -53,8 +51,7 @@ export function WelcomeScreen({ onSuggestionClick }: WelcomeScreenProps) {
       <div className="mt-6 flex items-start gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-left text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
         <Package className="mt-0.5 h-3.5 w-3.5 shrink-0" />
         <span>
-          For orders or account help, use checkout and your store&apos;s support flow — this assistant only
-          searches the public catalog.
+          Sign in from the header to link purchases to your account and ask the assistant about order status.
         </span>
       </div>
     </div>

@@ -1,6 +1,8 @@
 "use client";
 
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import { ShoppingBag, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -25,6 +27,25 @@ const NavbarActions = () => {
 
   return (
     <div className="flex items-center gap-x-3 sm:gap-x-4">
+      <SignedOut>
+        <SignInButton mode="modal">
+          <button
+            type="button"
+            className="text-sm font-medium text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-200"
+          >
+            Sign in
+          </button>
+        </SignInButton>
+      </SignedOut>
+      <SignedIn>
+        <Link
+          href="/account/orders"
+          className="max-w-[5.5rem] truncate text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-200 dark:hover:text-white sm:max-w-none"
+        >
+          My orders
+        </Link>
+        <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "h-9 w-9" } }} />
+      </SignedIn>
       {!isOpen && (
         <button
           type="button"
