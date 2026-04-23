@@ -35,12 +35,15 @@ function SummaryInner({
     if (!searchParams.get("success")) return;
 
     const sessionId = searchParams.get("session_id");
-    const dedupeKey = sessionId ? `checkout-return:${sessionId}` : "checkout-return:legacy";
-    try {
-      if (typeof window !== "undefined" && sessionStorage.getItem(dedupeKey)) return;
-      if (typeof window !== "undefined") sessionStorage.setItem(dedupeKey, "1");
-    } catch {
-      // sessionStorage unavailable
+    // Dedupe only per Stripe session id. A single "legacy" key blocked every later checkout without session_id.
+    if (sessionId) {
+      const dedupeKey = `checkout-return:${sessionId}`;
+      try {
+        if (typeof window !== "undefined" && sessionStorage.getItem(dedupeKey)) return;
+        if (typeof window !== "undefined") sessionStorage.setItem(dedupeKey, "1");
+      } catch {
+        // sessionStorage unavailable
+      }
     }
 
     toast.success("Paiement confirmé.");

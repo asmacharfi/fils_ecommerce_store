@@ -1,6 +1,6 @@
 "use client";
 
-import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
+import { UserButton, useAuth } from "@clerk/nextjs";
 import { ShoppingBag, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -67,11 +67,9 @@ function ClerkAuthSlot() {
   if (!isSignedIn) {
     return (
       <div className="flex max-w-full flex-wrap items-center justify-end gap-x-2 gap-y-1 sm:gap-x-3">
-        <SignInButton mode="modal">
-          <button type="button" className={CONNEXION_LINK_CLASS}>
-            Connexion
-          </button>
-        </SignInButton>
+        <Link href="/sign-in" prefetch={false} className={CONNEXION_LINK_CLASS}>
+          Connexion
+        </Link>
         <AccountOrdersLink />
       </div>
     );
