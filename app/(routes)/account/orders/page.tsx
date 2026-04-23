@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import axios from "axios";
+import axios, { isAxiosError } from "axios";
 import { Loader2, Package } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -52,9 +52,16 @@ function AccountOrdersClerk() {
     let cancelled = false;
     const run = async () => {
       const root = getBrowserStoreApiRoot();
-      const token = await getToken();
+      const token = await getToken({ skipCache: true });
       if (!root || !token) {
         setLoadError("API boutique ou session indisponible.");
+        setOrders([]);
+        return;
+      }
+      if (!/\/api\/[0-9a-f-]{36}\/?$/i.test(root)) {
+        setLoadError(
+          "NEXT_PUBLIC_API_URL doit ressembler à https://<admin>/api/<storeId> (UUID du magasin, sans slash final)."
+        );
         setOrders([]);
         return;
       }
@@ -66,9 +73,23 @@ function AccountOrdersClerk() {
           setOrders(Array.isArray(res.data) ? res.data : []);
           setLoadError(null);
         }
-      } catch {
+      } catch (e) {
         if (!cancelled) {
-          setLoadError("Impossible de charger vos commandes.");
+          if (isAxiosError(e) && e.response) {
+            const st = e.response.status;
+            const body = typeof e.response.data === "string" ? e.response.data : "";
+            if (st === 401) {
+              setLoadError(
+                "Session refusée par l’API (401). Vérifiez que le déploiement admin définit le même CLERK_SECRET_KEY que l’application Clerk de cette boutique."
+              );
+            } else if (st === 404) {
+              setLoadError("Commandes introuvables (404). Vérifiez NEXT_PUBLIC_API_URL (…/api/<storeId>).");
+            } else {
+              setLoadError(body || `Erreur serveur (${st}). Impossible de charger vos commandes.`);
+            }
+          } else {
+            setLoadError("Réseau ou serveur injoignable. Impossible de charger vos commandes.");
+          }
           setOrders([]);
         }
       }

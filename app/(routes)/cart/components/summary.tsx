@@ -45,8 +45,11 @@ function SummaryInner({
 
     toast.success("Paiement confirmé.");
     removeAll();
-    // Defer so Clerk can finish loading after a full-page return from Stripe before RSC refresh remounts the tree.
-    setTimeout(() => router.refresh(), 0);
+    // Avoid router.refresh() here — it refetches the whole RSC tree and can remount Clerk before the session is ready, hiding Connexion / compte. Strip success params with a client navigation instead.
+    const path = typeof window !== "undefined" ? window.location.pathname || "/cart" : "/cart";
+    setTimeout(() => {
+      if (searchParams.get("success")) router.replace(path);
+    }, 0);
 
     const base = getStoreApiRoot();
     if (sessionId && base) {
