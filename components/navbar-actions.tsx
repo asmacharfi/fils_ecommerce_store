@@ -32,17 +32,22 @@ function CartTrigger({ count, onClick }: { count: number; onClick: () => void })
   );
 }
 
-/** Reserves space while Clerk loads so the bar never loses Connexion / account after full-page navigations (e.g. Stripe return). */
+/**
+ * Guest checkout return from Stripe often leaves Clerk’s JS finishing after paint; a skeleton hid “Connexion”.
+ * A real /sign-in link works without waiting for useAuth().isLoaded (signed-in users may see a brief flash until loaded).
+ */
 function ClerkAuthSlot() {
   const { isLoaded, isSignedIn } = useAuth();
 
   if (!isLoaded) {
     return (
-      <div
-        className="h-9 min-w-[7rem] shrink-0 animate-pulse rounded-md bg-zinc-200/70 dark:bg-zinc-700/50"
-        aria-busy="true"
-        aria-label="Chargement du compte"
-      />
+      <Link
+        href="/sign-in"
+        prefetch={false}
+        className="text-sm font-medium text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-200"
+      >
+        Connexion
+      </Link>
     );
   }
 
