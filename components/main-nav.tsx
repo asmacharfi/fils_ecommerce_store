@@ -48,7 +48,7 @@ const MainNav: React.FC = () => {
   }));
 
   return (
-    <nav className="flex items-center justify-center gap-x-4 lg:gap-x-6">
+    <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 lg:gap-x-6">
       {routes.map((route) => (
         <Link
           key={route.href}

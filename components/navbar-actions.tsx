@@ -11,6 +11,9 @@ import Button from "@/components/ui/button";
 import useCart from "@/hooks/use-cart";
 import { CLERK_UI_ENABLED } from "@/lib/clerk-public";
 
+const CONNEXION_LINK_CLASS =
+  "text-sm font-medium text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-200";
+
 const AI_BUTTON_CLASS =
   "inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-2 text-sm font-medium text-white shadow-md shadow-amber-200/50 transition-all hover:from-amber-600 hover:to-orange-600 hover:shadow-lg hover:shadow-amber-300/50 dark:shadow-amber-900/30 dark:hover:shadow-amber-800/40";
 
@@ -41,11 +44,7 @@ function ClerkAuthSlot() {
 
   if (!isLoaded) {
     return (
-      <Link
-        href="/sign-in"
-        prefetch={false}
-        className="text-sm font-medium text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-200"
-      >
+      <Link href="/sign-in" prefetch={false} className={CONNEXION_LINK_CLASS}>
         Connexion
       </Link>
     );
@@ -54,10 +53,7 @@ function ClerkAuthSlot() {
   if (!isSignedIn) {
     return (
       <SignInButton mode="modal">
-        <button
-          type="button"
-          className="text-sm font-medium text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-200"
-        >
+        <button type="button" className={CONNEXION_LINK_CLASS}>
           Connexion
         </button>
       </SignInButton>
@@ -91,6 +87,9 @@ function NavbarActionsClerkless() {
 
   return (
     <div className="flex items-center gap-x-3 sm:gap-x-4">
+      <Link href="/sign-in" prefetch={false} className={CONNEXION_LINK_CLASS}>
+        Connexion
+      </Link>
       {!isOpen && <AiChatTrigger onClick={openChat} />}
       <CartTrigger count={cartCount} onClick={() => router.push("/cart")} />
     </div>
