@@ -12,6 +12,7 @@
   "dependencies": {
     "@ai-sdk/openai": "^3.0.53",
     "@ai-sdk/react": "^3.0.170",
+    "@clerk/localizations": "^2.8.1",
     "@clerk/nextjs": "^4.31.8",
     "@headlessui/react": "^1.7.15",
     "@types/node": "20.2.5",

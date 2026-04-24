@@ -91,7 +91,7 @@ function PersonalizedForYouInner({
 
   return (
     <div className="flex flex-col gap-y-8">
-      <ProductList title="Pour vous" items={items} />
+      <ProductList title="For you" items={items} />
     </div>
   );
 }
@@ -105,7 +105,7 @@ type PersonalizedForYouProps = {
   featuredProductIds: string[];
 };
 
-/** Recommandations : connectés uniquement, et masquées si identiques à « À la une » (mêmes IDs). */
+/** Signed-in recommendations; hidden when the product set matches Featured. */
 export function PersonalizedForYou({ featuredProductIds }: PersonalizedForYouProps) {
   if (!CLERK_UI_ENABLED) {
     return null;

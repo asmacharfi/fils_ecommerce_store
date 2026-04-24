@@ -1,4 +1,5 @@
 import { ClerkProvider } from '@clerk/nextjs'
+import { enUS } from '@clerk/localizations'
 import { Urbanist } from 'next/font/google'
 
 import { CLERK_UI_ENABLED } from '@/lib/clerk-public'
@@ -18,7 +19,7 @@ const font = Urbanist({ subsets: ['latin'] })
 
 export const metadata = {
   title: 'Boutique',
-  description: 'E-commerce avec assistant IA et recommandations personnalisées.',
+  description: 'E-commerce with a shopping assistant and personalized picks.',
 }
 
 export default function RootLayout({
@@ -27,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const tree = (
-    <html lang="en">
+    <html lang="en-US">
       <body className={`${font.className} overflow-x-visible`}>
         <AIChatPanelProvider>
           <AIProvider>
@@ -46,5 +47,9 @@ export default function RootLayout({
     </html>
   )
 
-  return CLERK_UI_ENABLED ? <ClerkProvider>{tree}</ClerkProvider> : tree
+  return CLERK_UI_ENABLED ? (
+    <ClerkProvider localization={enUS}>{tree}</ClerkProvider>
+  ) : (
+    tree
+  )
 }

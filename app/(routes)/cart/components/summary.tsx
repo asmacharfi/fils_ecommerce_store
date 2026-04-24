@@ -27,7 +27,7 @@ function SummaryInner({
 
   useEffect(() => {
     if (searchParams.get("canceled")) {
-      toast.error("Paiement annulé ou erreur.");
+      toast.error("Payment canceled or failed.");
       return;
     }
 
@@ -45,7 +45,7 @@ function SummaryInner({
       }
     }
 
-    toast.success("Paiement confirmé.");
+    toast.success("Payment confirmed.");
     removeAll();
     // Full reload to same pathname (no query) so Clerk rehydrates from cookies after the external Stripe redirect.
     // router.replace() alone can leave the session UI stuck as signed-out until manual refresh.
@@ -71,7 +71,7 @@ function SummaryInner({
   const onCheckout = async () => {
     const base = getStoreApiRoot();
     if (!base) {
-      toast.error("L’API boutique n’est pas configurée.");
+      toast.error("Store API is not configured.");
       return;
     }
 
@@ -90,7 +90,7 @@ function SummaryInner({
     try {
       await axios.post(`${base}/products/validate-stock`, { items: lineItems });
     } catch {
-      toast.error("Certains articles ne sont plus disponibles en cette quantité.");
+      toast.error("Some items are no longer available in this quantity.");
       return;
     }
 
@@ -102,7 +102,7 @@ function SummaryInner({
           skipCache: true,
         });
         if (!token) {
-          toast.error("Session expirée. Reconnectez-vous puis réessayez le paiement.");
+          toast.error("Session expired. Sign in again, then try checkout.");
           return;
         }
       }
@@ -112,26 +112,26 @@ function SummaryInner({
       });
       const url = response.data?.url;
       if (!url || typeof url !== "string") {
-        toast.error("Réponse de paiement invalide. Vérifiez la configuration Stripe sur l’admin.");
+        toast.error("Invalid payment response. Check Stripe configuration on the admin app.");
         return;
       }
       window.location.href = url;
     } catch (e) {
       if (isAxiosError(e) && e.response?.status === 403) {
-        toast.error("Paiement refusé : session non reconnue. Reconnectez-vous et réessayez.");
+        toast.error("Checkout rejected: session not recognized. Sign in and try again.");
         return;
       }
       if (isAxiosError(e) && typeof e.response?.data === "string" && e.response.data.length < 200) {
         toast.error(e.response.data);
         return;
       }
-      toast.error("Échec du paiement. Réessayez.");
+      toast.error("Checkout failed. Try again.");
     }
   };
 
   return (
     <div className="mt-16 rounded-lg bg-gray-50 px-4 py-6 sm:p-6 lg:col-span-5 lg:mt-0 lg:p-8">
-      <h2 className="text-lg font-medium text-gray-900">Récapitulatif</h2>
+      <h2 className="text-lg font-medium text-gray-900">Order summary</h2>
       <div className="mt-6 space-y-4">
         <div className="flex items-center justify-between border-t border-gray-200 pt-4">
           <div className="text-base font-medium text-gray-900">Total</div>
@@ -140,7 +140,7 @@ function SummaryInner({
       </div>
 
       <Button onClick={onCheckout} disabled={items.length === 0} className="mt-6 w-full">
-        Payer
+        Checkout
       </Button>
     </div>
   );

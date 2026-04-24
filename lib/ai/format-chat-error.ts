@@ -1,5 +1,5 @@
 /**
- * Maps provider / transport errors to shopper-friendly French copy.
+ * Maps provider / transport errors to shopper-friendly English copy.
  */
 
 function rawMessage(error: Error): string {
@@ -14,46 +14,46 @@ export function formatAiChatError(error: Error): string {
       raw
     )
   ) {
-    return "Le compte du fournisseur d’IA n’a pas de crédits utilisables ou la facturation n’est pas activée. L’assistant ne peut pas répondre pour le moment.";
+    return "The AI provider account has no usable credits or billing is disabled, so the assistant cannot run right now.";
   }
 
   if (/invalid_api_key|Incorrect API key/i.test(raw)) {
-    return "La clé API est absente ou refusée. Vérifiez OPENAI_API_KEY ou OPENROUTER_API_KEY (et AI_MODEL / AI_PROVIDER) sur le serveur.";
+    return "The API key is missing or rejected. Check OPENAI_API_KEY or OPENROUTER_API_KEY (and AI_MODEL / AI_PROVIDER) on the server.";
   }
 
   if (/rate_limit|429|too many requests/i.test(raw)) {
-    return "Le service d’IA limite les requêtes. Patientez une minute et réessayez.";
+    return "The AI service is rate-limited. Wait a minute and try again.";
   }
 
   if (/fetch failed|network|Failed to fetch/i.test(raw)) {
-    return "Impossible de joindre l’assistant. Vérifiez votre connexion et réessayez.";
+    return "Could not reach the assistant. Check your connection and try again.";
   }
 
   if (/Failed after \d+ attempts/i.test(raw) && /Provider returned error/i.test(raw)) {
-    return "Le fournisseur d’IA a renvoyé une erreur après plusieurs tentatives. Souvent : modèle indisponible (vérifiez AI_MODEL), crédits OpenRouter épuisés, ou panne temporaire. Réessayez plus tard ou changez de modèle.";
+    return "The AI provider returned an error after several attempts. Often: model unavailable (check AI_MODEL), OpenRouter credits exhausted, or a temporary outage. Try again later or change the model.";
   }
 
   if (/Provider returned error/i.test(raw)) {
-    return "Le fournisseur d’IA a renvoyé une erreur. Vérifiez AI_MODEL (ex. modèle OpenRouter valide), les crédits du compte, puis réessayez.";
+    return "The AI provider returned an error. Check AI_MODEL (e.g. a valid OpenRouter model), account credits, then try again.";
   }
 
   if (/No endpoints found|model not found|does not exist|invalid model/i.test(raw)) {
-    return "Le modèle demandé n’existe pas ou n’est pas disponible pour votre clé. Corrigez la variable AI_MODEL sur le déploiement.";
+    return "The requested model does not exist or is not available for your key. Fix the AI_MODEL variable on the deployment.";
   }
 
   if (/context length|maximum context|token limit|too long/i.test(raw)) {
-    return "La conversation ou le contexte dépasse la limite du modèle. Réduisez le message ou recommencez une nouvelle discussion.";
+    return "The conversation or context exceeds the model limit. Shorten your message or start a new chat.";
   }
 
   if (/overloaded|capacity|try again later/i.test(raw)) {
-    return "Le service d’IA est saturé. Réessayez dans quelques instants.";
+    return "The AI service is overloaded. Try again in a few moments.";
   }
 
   if (/content policy|safety|blocked/i.test(raw)) {
-    return "La requête a été refusée pour des raisons de politique de contenu. Reformulez votre demande.";
+    return "The request was blocked by content policy. Rephrase your message.";
   }
 
-  return error.message || "Une erreur s’est produite avec l’assistant.";
+  return error.message || "Something went wrong with the assistant.";
 }
 
 export function isQuotaOrBillingError(error: Error): boolean {

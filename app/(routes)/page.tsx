@@ -16,7 +16,7 @@ const HomePage = async () => {
         <BillboardCarousel items={billboardProducts} />
         <div className="flex flex-col gap-y-8 px-4 sm:px-6 lg:px-8">
           <PersonalizedForYou featuredProductIds={products.map((p) => p.id)} />
-          <ProductList title="À la une" items={products} />
+          <ProductList title="Featured" items={products} />
         </div>
       </div>
     </Container>

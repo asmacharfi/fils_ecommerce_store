@@ -11,7 +11,7 @@ import Container from "@/components/ui/container";
 import { CLERK_UI_ENABLED } from "@/lib/clerk-public";
 import { getBrowserStoreApiRoot } from "@/lib/public-store-api";
 
-const CONNEXION_LINK_CLASS =
+const LINK_CLASS =
   "text-sm font-medium text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-200";
 
 function AccountOrdersSignedIn() {
@@ -25,13 +25,13 @@ function AccountOrdersSignedIn() {
       const root = getBrowserStoreApiRoot();
       const token = await getToken({ skipCache: true });
       if (!root || !token) {
-        setLoadError("API boutique ou session indisponible.");
+        setLoadError("Store API or session unavailable.");
         setOrders([]);
         return;
       }
       if (!/\/api\/[0-9a-f-]{36}\/?$/i.test(root)) {
         setLoadError(
-          "NEXT_PUBLIC_API_URL doit ressembler à https://<admin>/api/<storeId> (UUID du magasin, sans slash final)."
+          "NEXT_PUBLIC_API_URL must look like https://<admin>/api/<storeId> (store UUID, no trailing slash)."
         );
         setOrders([]);
         return;
@@ -51,15 +51,15 @@ function AccountOrdersSignedIn() {
             const body = typeof e.response.data === "string" ? e.response.data : "";
             if (st === 401) {
               setLoadError(
-                "Session refusée par l’API (401). Vérifiez que le déploiement admin définit le même CLERK_SECRET_KEY que l’application Clerk de cette boutique."
+                "Session rejected by the API (401). Ensure the admin deployment uses the same CLERK_SECRET_KEY as this store’s Clerk app."
               );
             } else if (st === 404) {
-              setLoadError("Commandes introuvables (404). Vérifiez NEXT_PUBLIC_API_URL (…/api/<storeId>).");
+              setLoadError("Orders not found (404). Check NEXT_PUBLIC_API_URL (…/api/<storeId>).");
             } else {
-              setLoadError(body || `Erreur serveur (${st}). Impossible de charger vos commandes.`);
+              setLoadError(body || `Server error (${st}). Could not load your orders.`);
             }
           } else {
-            setLoadError("Réseau ou serveur injoignable. Impossible de charger vos commandes.");
+            setLoadError("Network error. Could not load your orders.");
           }
           setOrders([]);
         }
@@ -75,13 +75,13 @@ function AccountOrdersSignedIn() {
     <Container>
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Mes commandes</h1>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">My orders</h1>
           <Link href="/" className="text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400">
-            Continuer les achats
+            Continue shopping
           </Link>
         </div>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-          Suivez le paiement, la préparation, l’expédition et la livraison.
+          Track payment, fulfillment, shipping, and delivery.
         </p>
 
         {orders === null && (
@@ -97,7 +97,7 @@ function AccountOrdersSignedIn() {
         )}
 
         {orders && orders.length === 0 && !loadError && (
-          <p className="mt-10 text-center text-sm text-zinc-500 dark:text-zinc-400">Aucune commande pour le moment.</p>
+          <p className="mt-10 text-center text-sm text-zinc-500 dark:text-zinc-400">No orders yet.</p>
         )}
 
         {orders && orders.length > 0 && (
@@ -127,9 +127,9 @@ function AccountOrdersClerk() {
           <Container>
             <div className="mx-auto max-w-lg py-16 text-center">
               <Package className="mx-auto h-12 w-12 text-zinc-400" />
-              <h1 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">Connexion requise</h1>
+              <h1 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">Sign in required</h1>
               <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                Créez un compte ou connectez-vous pour voir vos commandes et leur statut d’expédition.
+                Create an account or sign in to see your orders and shipping status.
               </p>
               <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                 <SignInButton mode="modal" redirectUrl="/account/orders">
@@ -137,11 +137,11 @@ function AccountOrdersClerk() {
                     type="button"
                     className="inline-flex rounded-md bg-black px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
                   >
-                    Se connecter
+                    Sign in
                   </button>
                 </SignInButton>
-                <Link href="/sign-in" className={CONNEXION_LINK_CLASS}>
-                  Page de connexion
+                <Link href="/sign-up" className={LINK_CLASS}>
+                  Create account
                 </Link>
               </div>
             </div>
@@ -161,18 +161,17 @@ export default function AccountOrdersPage() {
       <Container>
         <div className="mx-auto max-w-lg py-16 text-center">
           <Package className="mx-auto h-12 w-12 text-zinc-400" />
-          <h1 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">Compte indisponible</h1>
+          <h1 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">Account unavailable</h1>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            La connexion client n’est pas configurée sur ce déploiement (clé Clerk manquante). Ajoutez{" "}
-            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code> et{" "}
-            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">CLERK_SECRET_KEY</code> sur Vercel puis
-            redéployez.
+            Sign-in is not configured on this deployment (missing Clerk keys). Add{" "}
+            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code> and{" "}
+            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">CLERK_SECRET_KEY</code> on Vercel, then redeploy.
           </p>
           <Link
             href="/"
             className="mt-6 inline-flex rounded-md bg-black px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
           >
-            Retour à l’accueil
+            Back to home
           </Link>
         </div>
       </Container>

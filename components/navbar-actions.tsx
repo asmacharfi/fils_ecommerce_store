@@ -11,10 +11,10 @@ import Button from "@/components/ui/button";
 import useCart from "@/hooks/use-cart";
 import { CLERK_UI_ENABLED } from "@/lib/clerk-public";
 
-const CONNEXION_LINK_CLASS =
+const LINK_CLASS =
   "text-sm font-medium text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-200";
 
-const ACCOUNT_LINK_CLASS =
+const SECONDARY_LINK_CLASS =
   "text-sm font-medium text-zinc-600 underline-offset-4 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white";
 
 const AI_BUTTON_CLASS =
@@ -24,7 +24,7 @@ function AiChatTrigger({ onClick }: { onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} className={AI_BUTTON_CLASS}>
       <Sparkles className="h-4 w-4" />
-      Assistant IA
+      Shopping assistant
     </button>
   );
 }
@@ -52,11 +52,11 @@ function NavbarActionsClerkless() {
 
   return (
     <div className="flex max-w-full flex-wrap items-center justify-end gap-x-2 gap-y-1 sm:gap-x-3">
-      <Link href="/sign-in" prefetch={false} className={CONNEXION_LINK_CLASS}>
-        Connexion
+      <Link href="/sign-in" prefetch={false} className={LINK_CLASS}>
+        Sign in
       </Link>
-      <Link href="/sign-in" prefetch={false} className={ACCOUNT_LINK_CLASS}>
-        Mon compte
+      <Link href="/sign-up" prefetch={false} className={SECONDARY_LINK_CLASS}>
+        Create account
       </Link>
       {!isOpen && <AiChatTrigger onClick={openChat} />}
       <CartTrigger count={cartCount} onClick={() => router.push("/cart")} />
@@ -83,14 +83,14 @@ function NavbarActionsWithClerk() {
       </ClerkLoading>
       <ClerkLoaded>
         <SignedOut>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <div className="flex flex-wrap items-center justify-end gap-x-2 gap-y-1">
             <SignInButton mode="modal" redirectUrl="/account/orders">
-              <button type="button" className={CONNEXION_LINK_CLASS}>
-                Connexion
+              <button type="button" className={LINK_CLASS}>
+                Sign in
               </button>
             </SignInButton>
-            <Link href="/sign-in" prefetch={false} className={ACCOUNT_LINK_CLASS}>
-              Mon compte
+            <Link href="/sign-up" prefetch={false} className={SECONDARY_LINK_CLASS}>
+              Create account
             </Link>
           </div>
         </SignedOut>
@@ -100,7 +100,7 @@ function NavbarActionsWithClerk() {
             prefetch={false}
             className="max-w-[6.5rem] truncate text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-200 dark:hover:text-white sm:max-w-none"
           >
-            Mes commandes
+            My orders
           </Link>
         </SignedIn>
       </ClerkLoaded>

@@ -52,45 +52,45 @@ function AssistantErrorPanel({
       }
       role="alert"
     >
-      <p className="font-semibold">L&apos;assistant n&apos;a pas pu répondre</p>
+      <p className="font-semibold">The assistant couldn&apos;t complete that request</p>
       <p className="mt-1 text-xs leading-relaxed opacity-90">{formatAiChatError(error)}</p>
 
       {quota && (
         <div className="mt-3 rounded-lg border border-amber-300/80 bg-white/80 px-3 py-2 text-left text-xs text-zinc-800 dark:border-amber-800 dark:bg-zinc-900/60 dark:text-zinc-200">
-          <p className="font-medium text-zinc-900 dark:text-zinc-100">Régler la facturation du fournisseur d’IA</p>
+          <p className="font-medium text-zinc-900 dark:text-zinc-100">Fix AI provider billing</p>
           <ol className="mt-2 list-decimal space-y-1 pl-4">
             <li>
-              Ouvrez{" "}
+              Open{" "}
               <a
                 className="font-medium text-amber-800 underline hover:text-amber-900 dark:text-amber-300"
                 href="https://openrouter.ai/settings/credits"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                les crédits OpenRouter
+                OpenRouter credits
               </a>{" "}
-              et vérifiez que le compte lié à votre clé API a du crédit.
+              and ensure the account for your API key has balance.
             </li>
             <li>
-              Vérifiez votre clé sur{" "}
+              Confirm your key at{" "}
               <a
                 className="font-medium text-amber-800 underline hover:text-amber-900 dark:text-amber-300"
                 href="https://openrouter.ai/settings/keys"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                OpenRouter — clés
+                OpenRouter keys
               </a>
               .
             </li>
             <li>
-              Définissez <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">OPENROUTER_API_KEY</code> ou{" "}
-              <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">OPENAI_API_KEY</code> dans{" "}
-              <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">.env</code> (voir{" "}
+              Set <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">OPENROUTER_API_KEY</code> or{" "}
+              <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">OPENAI_API_KEY</code> in{" "}
+              <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">.env</code> (see{" "}
               <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">.env.example</code>).
             </li>
             <li>
-              Redémarrez <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">npm run dev</code> ou redéployez.
+              Restart <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">npm run dev</code> or redeploy.
             </li>
           </ol>
         </div>
@@ -98,10 +98,10 @@ function AssistantErrorPanel({
 
       <div className="mt-3 flex flex-wrap gap-3">
         <button type="button" className="text-xs font-medium underline" onClick={onDismiss}>
-          Fermer
+          Dismiss
         </button>
         <button type="button" className="text-xs font-medium underline" onClick={() => void onStop()}>
-          Arrêter
+          Stop
         </button>
       </div>
     </div>
@@ -230,7 +230,7 @@ const AIDrawer = () => {
               type="button"
               onClick={closeChat}
               className="absolute right-4 top-1/2 h-10 w-10 -translate-y-1/2 rounded-md text-center leading-10 text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
-              aria-label="Close assistant"
+              aria-label="Close shopping assistant"
             >
               <X className="inline-block h-4 w-4 align-middle" />
             </button>
@@ -239,7 +239,7 @@ const AIDrawer = () => {
               className="truncate pl-6 pr-16 text-base font-semibold leading-[4rem] text-zinc-900 dark:text-zinc-100"
             >
               <Sparkles className="mr-2 inline-block h-5 w-5 align-middle text-amber-500" />
-              Assistant d&apos;achat
+              Shopping assistant
             </div>
           </header>
 
@@ -350,7 +350,7 @@ const AIDrawer = () => {
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Posez une question sur les produits…"
+                placeholder="Ask about products…"
                 disabled={busy}
                 className="box-border h-10 w-full rounded-md border border-zinc-200 bg-white py-2 pl-3 pr-12 text-sm text-zinc-900 shadow-sm outline-none ring-offset-white placeholder:text-zinc-500 focus-visible:ring-2 focus-visible:ring-amber-400/60 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-offset-zinc-950"
               />

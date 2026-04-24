@@ -11,7 +11,13 @@ export type MyOrderRow = {
   fulfillmentStatus: string;
   trackingNumber: string | null;
   total: number;
-  items: { name: string; quantity: number; unitPrice: number; imageUrl?: string | null }[];
+  items: {
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    productId: string;
+    imageUrl?: string | null;
+  }[];
 };
 
 export type GetMyOrdersOutput = {
@@ -29,12 +35,12 @@ export function createGetMyOrdersTool(getToken: () => Promise<string | null>) {
       const root = getStoreApiRoot();
       const token = await getToken();
       if (!root) {
-        return { found: false, message: "API boutique indisponible.", orders: [] };
+        return { found: false, message: "Store API is unavailable.", orders: [] };
       }
       if (!token) {
         return {
           found: false,
-          message: "Le client doit se connecter pour voir ses commandes.",
+          message: "The customer must sign in to view orders.",
           orders: [],
         };
       }
@@ -45,22 +51,22 @@ export function createGetMyOrdersTool(getToken: () => Promise<string | null>) {
           cache: "no-store",
         });
         if (res.status === 401) {
-          return { found: false, message: "Session expirée. Reconnectez-vous.", orders: [] };
+          return { found: false, message: "Session expired. Please sign in again.", orders: [] };
         }
         if (!res.ok) {
-          return { found: false, message: "Impossible de charger les commandes pour le moment.", orders: [] };
+          return { found: false, message: "Could not load orders right now.", orders: [] };
         }
         const data = (await res.json()) as MyOrderRow[];
         if (!Array.isArray(data) || data.length === 0) {
-          return { found: false, message: "Aucune commande pour ce compte sur cette boutique.", orders: [] };
+          return { found: false, message: "No orders for this account in this store.", orders: [] };
         }
         return {
           found: true,
-          message: `${data.length} commande(s) trouvée(s). Résumez statuts et montants clairement.`,
+          message: `${data.length} order(s) found. Summarize status and totals clearly; the UI shows images and links.`,
           orders: data,
         };
       } catch {
-        return { found: false, message: "Erreur réseau lors du chargement des commandes.", orders: [] };
+        return { found: false, message: "Network error while loading orders.", orders: [] };
       }
     },
   });
