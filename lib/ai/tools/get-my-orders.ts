@@ -11,7 +11,7 @@ export type MyOrderRow = {
   fulfillmentStatus: string;
   trackingNumber: string | null;
   total: number;
-  items: { name: string; quantity: number; unitPrice: number }[];
+  items: { name: string; quantity: number; unitPrice: number; imageUrl?: string | null }[];
 };
 
 export type GetMyOrdersOutput = {

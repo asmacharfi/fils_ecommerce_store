@@ -9,8 +9,8 @@ const Navbar = () => {
       <Container>
         {/* Grid avoids center nav overlapping the auth block (common on cart after checkout). */}
         <div className="grid h-16 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4 sm:gap-3 sm:px-6 lg:px-8">
-          <Link href="/" className="flex shrink-0 items-center gap-x-2">
-            <p className="font-bold text-xl">BOUTIQUE</p>
+          <Link href="/" className="flex min-w-0 max-w-[42vw] shrink-0 items-center gap-x-2 sm:max-w-none">
+            <p className="truncate font-bold text-xl">BOUTIQUE</p>
           </Link>
           <div className="flex min-w-0 justify-center overflow-x-auto border-x border-transparent px-1">
             <MainNav />

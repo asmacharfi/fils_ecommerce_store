@@ -1,6 +1,6 @@
 "use client";
 
-import { UserButton, useAuth } from "@clerk/nextjs";
+import { ClerkLoaded, ClerkLoading, SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { ShoppingBag, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,14 +16,6 @@ const CONNEXION_LINK_CLASS =
 
 const ACCOUNT_LINK_CLASS =
   "text-sm font-medium text-zinc-600 underline-offset-4 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white";
-
-function AccountOrdersLink() {
-  return (
-    <Link href="/account/orders" prefetch={false} className={ACCOUNT_LINK_CLASS}>
-      Mon compte
-    </Link>
-  );
-}
 
 const AI_BUTTON_CLASS =
   "inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-2 text-sm font-medium text-white shadow-md shadow-amber-200/50 transition-all hover:from-amber-600 hover:to-orange-600 hover:shadow-lg hover:shadow-amber-300/50 dark:shadow-amber-900/30 dark:hover:shadow-amber-800/40";
@@ -46,48 +38,6 @@ function CartTrigger({ count, onClick }: { count: number; onClick: () => void })
   );
 }
 
-/**
- * Guest checkout return from Stripe often leaves Clerk’s JS finishing after paint; a skeleton hid “Connexion”.
- * A real /sign-in link works without waiting for useAuth().isLoaded (signed-in users may see a brief flash until loaded).
- */
-function ClerkAuthSlot() {
-  const { isLoaded, isSignedIn } = useAuth();
-
-  if (!isLoaded) {
-    return (
-      <div className="flex max-w-full flex-wrap items-center justify-end gap-x-2 gap-y-1 sm:gap-x-3">
-        <Link href="/sign-in" prefetch={false} className={CONNEXION_LINK_CLASS}>
-          Connexion
-        </Link>
-        <AccountOrdersLink />
-      </div>
-    );
-  }
-
-  if (!isSignedIn) {
-    return (
-      <div className="flex max-w-full flex-wrap items-center justify-end gap-x-2 gap-y-1 sm:gap-x-3">
-        <Link href="/sign-in" prefetch={false} className={CONNEXION_LINK_CLASS}>
-          Connexion
-        </Link>
-        <AccountOrdersLink />
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex max-w-full flex-wrap items-center justify-end gap-x-2 gap-y-1 sm:gap-x-3">
-      <Link
-        href="/account/orders"
-        className="max-w-[6rem] truncate text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-200 dark:hover:text-white sm:max-w-none"
-      >
-        Mes commandes
-      </Link>
-      <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "h-9 w-9" } }} />
-    </div>
-  );
-}
-
 function NavbarActionsClerkless() {
   const [isMounted, setIsMounted] = useState(false);
   const { isOpen, openChat } = useAIChatPanel();
@@ -105,7 +55,9 @@ function NavbarActionsClerkless() {
       <Link href="/sign-in" prefetch={false} className={CONNEXION_LINK_CLASS}>
         Connexion
       </Link>
-      <AccountOrdersLink />
+      <Link href="/sign-in" prefetch={false} className={ACCOUNT_LINK_CLASS}>
+        Mon compte
+      </Link>
       {!isOpen && <AiChatTrigger onClick={openChat} />}
       <CartTrigger count={cartCount} onClick={() => router.push("/cart")} />
     </div>
@@ -125,10 +77,46 @@ function NavbarActionsWithClerk() {
   const cartCount = isMounted ? itemCount : 0;
 
   return (
-    <div className="flex max-w-full flex-wrap items-center justify-end gap-x-2 gap-y-1 sm:gap-x-3">
-      <ClerkAuthSlot />
+    <div className="flex max-w-full min-w-0 flex-wrap items-center justify-end gap-x-2 gap-y-1 sm:gap-x-3">
+      <ClerkLoading>
+        <div className="h-4 w-24 max-w-[6.5rem] animate-pulse rounded bg-zinc-200 dark:bg-zinc-700 sm:max-w-none" />
+      </ClerkLoading>
+      <ClerkLoaded>
+        <SignedOut>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <SignInButton mode="modal" redirectUrl="/account/orders">
+              <button type="button" className={CONNEXION_LINK_CLASS}>
+                Connexion
+              </button>
+            </SignInButton>
+            <Link href="/sign-in" prefetch={false} className={ACCOUNT_LINK_CLASS}>
+              Mon compte
+            </Link>
+          </div>
+        </SignedOut>
+        <SignedIn>
+          <Link
+            href="/orders"
+            prefetch={false}
+            className="max-w-[6.5rem] truncate text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-200 dark:hover:text-white sm:max-w-none"
+          >
+            Mes commandes
+          </Link>
+        </SignedIn>
+      </ClerkLoaded>
+
       {!isOpen && <AiChatTrigger onClick={openChat} />}
       <CartTrigger count={cartCount} onClick={() => router.push("/cart")} />
+
+      <ClerkLoaded>
+        <SignedIn>
+          <UserButton
+            afterSignOutUrl="/"
+            userProfileUrl="/account/orders"
+            appearance={{ elements: { avatarBox: "h-9 w-9" } }}
+          />
+        </SignedIn>
+      </ClerkLoaded>
     </div>
   );
 }

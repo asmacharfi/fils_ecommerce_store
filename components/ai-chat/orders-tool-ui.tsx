@@ -48,7 +48,7 @@ export function OrdersToolUI({ toolPart }: { toolPart: GetMyOrdersToolUIPart }) 
         >
           {toolPart.state === "output-error" ? (
             <span className="text-xs text-red-700 dark:text-red-300">
-              {toolPart.errorText || "Could not load orders"}
+              {toolPart.errorText || "Impossible de charger les commandes"}
             </span>
           ) : isComplete ? (
             <CheckCircle2 className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-400" />

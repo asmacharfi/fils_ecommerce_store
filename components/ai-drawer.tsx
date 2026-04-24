@@ -44,55 +44,64 @@ function AssistantErrorPanel({
   const quota = isQuotaOrBillingError(error);
 
   return (
-    <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
-      <p className="font-semibold">Assistant could not complete that request</p>
+    <div
+      className={
+        quota
+          ? "mb-4 rounded-xl border border-amber-200/90 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/35 dark:text-amber-100"
+          : "mb-4 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900/50 dark:text-zinc-100"
+      }
+      role="alert"
+    >
+      <p className="font-semibold">L&apos;assistant n&apos;a pas pu répondre</p>
       <p className="mt-1 text-xs leading-relaxed opacity-90">{formatAiChatError(error)}</p>
 
       {quota && (
-        <div className="mt-3 rounded-lg border border-amber-300/80 bg-white/70 px-3 py-2 text-left text-xs text-zinc-800 dark:border-amber-800 dark:bg-zinc-900/60 dark:text-zinc-200">
-          <p className="font-medium text-zinc-900 dark:text-zinc-100">Fix AI provider billing</p>
+        <div className="mt-3 rounded-lg border border-amber-300/80 bg-white/80 px-3 py-2 text-left text-xs text-zinc-800 dark:border-amber-800 dark:bg-zinc-900/60 dark:text-zinc-200">
+          <p className="font-medium text-zinc-900 dark:text-zinc-100">Régler la facturation du fournisseur d’IA</p>
           <ol className="mt-2 list-decimal space-y-1 pl-4">
             <li>
-              Open{" "}
+              Ouvrez{" "}
               <a
                 className="font-medium text-amber-800 underline hover:text-amber-900 dark:text-amber-300"
                 href="https://openrouter.ai/settings/credits"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                OpenRouter credits
+                les crédits OpenRouter
               </a>{" "}
-              and make sure the account behind your API key has credits.
+              et vérifiez que le compte lié à votre clé API a du crédit.
             </li>
             <li>
-              Confirm an API key at{" "}
+              Vérifiez votre clé sur{" "}
               <a
                 className="font-medium text-amber-800 underline hover:text-amber-900 dark:text-amber-300"
                 href="https://openrouter.ai/settings/keys"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                OpenRouter keys
+                OpenRouter — clés
               </a>
               .
             </li>
             <li>
-              Set either <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">OPENROUTER_API_KEY</code> or{" "}
-              <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">OPENAI_API_KEY</code> in{" "}
-              <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">.env</code> (see{" "}
+              Définissez <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">OPENROUTER_API_KEY</code> ou{" "}
+              <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">OPENAI_API_KEY</code> dans{" "}
+              <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">.env</code> (voir{" "}
               <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">.env.example</code>).
             </li>
-            <li>Restart <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">npm run dev</code>.</li>
+            <li>
+              Redémarrez <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">npm run dev</code> ou redéployez.
+            </li>
           </ol>
         </div>
       )}
 
       <div className="mt-3 flex flex-wrap gap-3">
         <button type="button" className="text-xs font-medium underline" onClick={onDismiss}>
-          Dismiss
+          Fermer
         </button>
         <button type="button" className="text-xs font-medium underline" onClick={() => void onStop()}>
-          Stop request
+          Arrêter
         </button>
       </div>
     </div>
@@ -204,7 +213,7 @@ const AIDrawer = () => {
   return (
     <Fragment>
       <div
-        className="fixed inset-0 z-40 bg-black/50 sm:hidden"
+        className="fixed inset-0 z-40 bg-black/50 xl:hidden"
         onClick={closeChat}
         aria-hidden="true"
       />
@@ -213,7 +222,7 @@ const AIDrawer = () => {
         role="dialog"
         aria-modal="true"
         aria-labelledby="ai-drawer-title"
-        className="fixed z-50 box-border overflow-hidden border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 max-sm:inset-0 max-sm:h-[100dvh] max-sm:w-full sm:left-auto sm:right-0 sm:top-0 sm:h-screen sm:w-[448px] sm:border-l"
+        className="fixed z-50 box-border overflow-hidden border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 max-xl:inset-0 max-xl:h-[100dvh] max-xl:w-full xl:left-auto xl:right-0 xl:top-0 xl:h-[100dvh] xl:w-[min(100vw,448px)] xl:border-l"
       >
         <div className="relative h-full w-full">
           <header className="absolute left-0 right-0 top-0 z-10 h-16 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -234,7 +243,7 @@ const AIDrawer = () => {
             </div>
           </header>
 
-          <div className="absolute bottom-[88px] left-0 right-0 top-16 overflow-y-auto overscroll-contain px-4 py-4">
+          <div className="absolute bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-0 right-0 top-16 overflow-y-auto overscroll-contain px-4 py-4">
             {error && (
               <AssistantErrorPanel
                 error={error}
@@ -336,7 +345,7 @@ const AIDrawer = () => {
             )}
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 border-t border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="absolute bottom-0 left-0 right-0 border-t border-zinc-200 bg-white px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 dark:border-zinc-800 dark:bg-zinc-950">
             <form onSubmit={onSubmit} className="relative">
               <input
                 value={input}

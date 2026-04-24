@@ -44,7 +44,7 @@ const ProductCard: React.FC<ProductCard> = ({ data }) => {
   const imageUrl = data.images?.[0]?.url?.trim();
 
   return (
-    <div onClick={handleClick} className="group cursor-pointer space-y-4 rounded-xl border bg-white p-3">
+    <div onClick={handleClick} className="group min-w-0 cursor-pointer space-y-4 rounded-xl border bg-white p-3">
       {/* Image & actions */}
       <div className="relative aspect-square rounded-xl bg-gray-100">
         {imageUrl ? (
@@ -71,8 +71,8 @@ const ProductCard: React.FC<ProductCard> = ({ data }) => {
       </div>
       {/* Description */}
       <div>
-        <p className="text-lg font-semibold">{data.name}</p>
-        <p className="text-sm text-gray-500">{data.category?.name}</p>
+        <p className="truncate text-lg font-semibold">{data.name}</p>
+        <p className="truncate text-sm text-gray-500">{data.category?.name}</p>
       </div>
       {/* Price & Reiew */}
       <div className="flex items-center justify-between">

@@ -1,54 +1,25 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { ClerkLoaded, ClerkLoading, SignInButton, SignedIn, SignedOut, useAuth } from "@clerk/nextjs";
 import axios, { isAxiosError } from "axios";
 import { Loader2, Package } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { OrderAccountCard, type AccountOrderRow } from "@/components/account/order-account-card";
 import Container from "@/components/ui/container";
 import { CLERK_UI_ENABLED } from "@/lib/clerk-public";
 import { getBrowserStoreApiRoot } from "@/lib/public-store-api";
 
-type OrderRow = {
-  id: string;
-  createdAt: string;
-  statusLabel: string;
-  isPaid: boolean;
-  fulfillmentStatus: string;
-  trackingNumber: string | null;
-  total: number;
-  items: { name: string; quantity: number; unitPrice: number }[];
-};
+const CONNEXION_LINK_CLASS =
+  "text-sm font-medium text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-200";
 
-function formatMoney(n: number) {
-  return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "USD" }).format(n);
-}
-
-function formatStatusFr(label: string): string {
-  const map: Record<string, string> = {
-    awaiting_payment: "En attente de paiement",
-    processing: "Préparation",
-    shipped: "Expédiée",
-    delivered: "Livrée",
-  };
-  return map[label] ?? label.replace(/_/g, " ");
-}
-
-function statusBadgeClass(label: string) {
-  if (label === "awaiting_payment") return "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100";
-  if (label === "shipped") return "bg-blue-100 text-blue-900 dark:bg-blue-900/40 dark:text-blue-100";
-  if (label === "delivered") return "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100";
-  return "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100";
-}
-
-function AccountOrdersClerk() {
-  const { isLoaded, isSignedIn, getToken } = useAuth();
-  const [orders, setOrders] = useState<OrderRow[] | null>(null);
+function AccountOrdersSignedIn() {
+  const { getToken } = useAuth();
+  const [orders, setOrders] = useState<AccountOrderRow[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
     let cancelled = false;
     const run = async () => {
       const root = getBrowserStoreApiRoot();
@@ -98,42 +69,12 @@ function AccountOrdersClerk() {
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, isSignedIn, getToken]);
-
-  if (!isLoaded) {
-    return (
-      <Container>
-        <div className="flex min-h-[40vh] items-center justify-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
-        </div>
-      </Container>
-    );
-  }
-
-  if (!isSignedIn) {
-    return (
-      <Container>
-        <div className="mx-auto max-w-lg py-16 text-center">
-          <Package className="mx-auto h-12 w-12 text-zinc-400" />
-          <h1 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">Connexion requise</h1>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            Créez un compte ou connectez-vous pour voir vos commandes et leur statut d’expédition.
-          </p>
-          <Link
-            href="/sign-in"
-            className="mt-6 inline-flex rounded-md bg-black px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
-          >
-            Se connecter
-          </Link>
-        </div>
-      </Container>
-    );
-  }
+  }, [getToken]);
 
   return (
     <Container>
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Mes commandes</h1>
           <Link href="/" className="text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400">
             Continuer les achats
@@ -162,53 +103,55 @@ function AccountOrdersClerk() {
         {orders && orders.length > 0 && (
           <ul className="mt-8 space-y-6">
             {orders.map((o) => (
-              <li
-                key={o.id}
-                className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-mono text-xs text-zinc-500">Commande {o.id}</p>
-                    <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                      {new Date(o.createdAt).toLocaleString("fr-FR")}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span
-                      className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClass(
-                        o.statusLabel
-                      )}`}
-                    >
-                      {formatStatusFr(o.statusLabel)}
-                    </span>
-                    <p className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                      {formatMoney(o.total)}
-                    </p>
-                  </div>
-                </div>
-
-                {o.trackingNumber ? (
-                  <p className="mt-4 text-sm font-medium text-violet-700 dark:text-violet-300">
-                    Suivi : {o.trackingNumber}
-                  </p>
-                ) : null}
-
-                <ul className="mt-4 space-y-1 border-t border-zinc-100 pt-4 text-sm dark:border-zinc-800">
-                  {o.items.map((it, i) => (
-                    <li key={i} className="flex justify-between gap-4 text-zinc-700 dark:text-zinc-300">
-                      <span>
-                        {it.name} ×{it.quantity}
-                      </span>
-                      <span className="shrink-0 text-zinc-500">{formatMoney(it.unitPrice * it.quantity)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </li>
+              <OrderAccountCard key={o.id} order={o} />
             ))}
           </ul>
         )}
       </div>
     </Container>
+  );
+}
+
+function AccountOrdersClerk() {
+  return (
+    <>
+      <ClerkLoading>
+        <Container>
+          <div className="flex min-h-[40vh] items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+          </div>
+        </Container>
+      </ClerkLoading>
+      <ClerkLoaded>
+        <SignedOut>
+          <Container>
+            <div className="mx-auto max-w-lg py-16 text-center">
+              <Package className="mx-auto h-12 w-12 text-zinc-400" />
+              <h1 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">Connexion requise</h1>
+              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                Créez un compte ou connectez-vous pour voir vos commandes et leur statut d’expédition.
+              </p>
+              <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                <SignInButton mode="modal" redirectUrl="/account/orders">
+                  <button
+                    type="button"
+                    className="inline-flex rounded-md bg-black px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
+                  >
+                    Se connecter
+                  </button>
+                </SignInButton>
+                <Link href="/sign-in" className={CONNEXION_LINK_CLASS}>
+                  Page de connexion
+                </Link>
+              </div>
+            </div>
+          </Container>
+        </SignedOut>
+        <SignedIn>
+          <AccountOrdersSignedIn />
+        </SignedIn>
+      </ClerkLoaded>
+    </>
   );
 }
 
