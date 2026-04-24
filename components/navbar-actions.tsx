@@ -1,7 +1,7 @@
 "use client";
 
 import { ClerkLoaded, ClerkLoading, SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
-import { ShoppingBag, Sparkles } from "lucide-react";
+import { ShoppingBag, Sparkles, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -11,14 +11,25 @@ import Button from "@/components/ui/button";
 import useCart from "@/hooks/use-cart";
 import { CLERK_UI_ENABLED } from "@/lib/clerk-public";
 
-const LINK_CLASS =
-  "text-sm font-medium text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-200";
+const MY_ORDERS_LINK_CLASS =
+  "max-w-[6.5rem] truncate text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-200 dark:hover:text-white sm:max-w-none";
 
-const SECONDARY_LINK_CLASS =
-  "text-sm font-medium text-zinc-600 underline-offset-4 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white";
+/** Outline user icon — matches “sign in / profile” affordance in the header */
+const SIGN_IN_ICON_BUTTON_CLASS =
+  "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-zinc-600 outline-none ring-offset-white transition-colors hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-zinc-400 dark:text-zinc-300 dark:ring-offset-zinc-950 dark:hover:bg-zinc-800";
 
 const AI_BUTTON_CLASS =
   "inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-2 text-sm font-medium text-white shadow-md shadow-amber-200/50 transition-all hover:from-amber-600 hover:to-orange-600 hover:shadow-lg hover:shadow-amber-300/50 dark:shadow-amber-900/30 dark:hover:shadow-amber-800/40";
+
+function SignInIconTrigger() {
+  return (
+    <SignInButton mode="modal" redirectUrl="/account/orders">
+      <button type="button" className={SIGN_IN_ICON_BUTTON_CLASS} aria-label="Sign in">
+        <User className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+      </button>
+    </SignInButton>
+  );
+}
 
 function AiChatTrigger({ onClick }: { onClick: () => void }) {
   return (
@@ -52,11 +63,8 @@ function NavbarActionsClerkless() {
 
   return (
     <div className="flex max-w-full flex-wrap items-center justify-end gap-x-2 gap-y-1 sm:gap-x-3">
-      <Link href="/sign-in" prefetch={false} className={LINK_CLASS}>
-        Sign in
-      </Link>
-      <Link href="/sign-up" prefetch={false} className={SECONDARY_LINK_CLASS}>
-        Create account
+      <Link href="/sign-in" prefetch={false} className={SIGN_IN_ICON_BUTTON_CLASS} aria-label="Sign in">
+        <User className="h-5 w-5" strokeWidth={1.75} aria-hidden />
       </Link>
       {!isOpen && <AiChatTrigger onClick={openChat} />}
       <CartTrigger count={cartCount} onClick={() => router.push("/cart")} />
@@ -79,27 +87,14 @@ function NavbarActionsWithClerk() {
   return (
     <div className="flex max-w-full min-w-0 flex-wrap items-center justify-end gap-x-2 gap-y-1 sm:gap-x-3">
       <ClerkLoading>
-        <div className="h-4 w-24 max-w-[6.5rem] animate-pulse rounded bg-zinc-200 dark:bg-zinc-700 sm:max-w-none" />
+        <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-700" />
       </ClerkLoading>
       <ClerkLoaded>
         <SignedOut>
-          <div className="flex flex-wrap items-center justify-end gap-x-2 gap-y-1">
-            <SignInButton mode="modal" redirectUrl="/account/orders">
-              <button type="button" className={LINK_CLASS}>
-                Sign in
-              </button>
-            </SignInButton>
-            <Link href="/sign-up" prefetch={false} className={SECONDARY_LINK_CLASS}>
-              Create account
-            </Link>
-          </div>
+          <SignInIconTrigger />
         </SignedOut>
         <SignedIn>
-          <Link
-            href="/orders"
-            prefetch={false}
-            className="max-w-[6.5rem] truncate text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-200 dark:hover:text-white sm:max-w-none"
-          >
+          <Link href="/orders" prefetch={false} className={MY_ORDERS_LINK_CLASS}>
             My orders
           </Link>
         </SignedIn>

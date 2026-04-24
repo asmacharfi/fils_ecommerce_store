@@ -2,7 +2,7 @@
 
 import { ClerkLoaded, ClerkLoading, SignInButton, SignedIn, SignedOut, useAuth } from "@clerk/nextjs";
 import axios, { isAxiosError } from "axios";
-import { Loader2, Package } from "lucide-react";
+import { Loader2, Package, User } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -11,8 +11,8 @@ import Container from "@/components/ui/container";
 import { CLERK_UI_ENABLED } from "@/lib/clerk-public";
 import { getBrowserStoreApiRoot } from "@/lib/public-store-api";
 
-const LINK_CLASS =
-  "text-sm font-medium text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-200";
+const SIGN_IN_ICON_CLASS =
+  "mx-auto inline-flex h-12 w-12 items-center justify-center rounded-full text-zinc-700 outline-none ring-offset-white transition-colors hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-zinc-400 dark:text-zinc-200 dark:ring-offset-zinc-950 dark:hover:bg-zinc-800";
 
 function AccountOrdersSignedIn() {
   const { getToken } = useAuth();
@@ -129,20 +129,14 @@ function AccountOrdersClerk() {
               <Package className="mx-auto h-12 w-12 text-zinc-400" />
               <h1 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">Sign in required</h1>
               <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                Create an account or sign in to see your orders and shipping status.
+                Sign in to see your orders and shipping status.
               </p>
-              <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <div className="mt-6 flex justify-center">
                 <SignInButton mode="modal" redirectUrl="/account/orders">
-                  <button
-                    type="button"
-                    className="inline-flex rounded-md bg-black px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
-                  >
-                    Sign in
+                  <button type="button" className={SIGN_IN_ICON_CLASS} aria-label="Sign in">
+                    <User className="h-6 w-6" strokeWidth={1.75} aria-hidden />
                   </button>
                 </SignInButton>
-                <Link href="/sign-up" className={LINK_CLASS}>
-                  Create account
-                </Link>
               </div>
             </div>
           </Container>
