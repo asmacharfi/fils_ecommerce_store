@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { SignedIn, useAuth } from "@clerk/nextjs";
 import axios from "axios";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -67,7 +67,7 @@ function PersonalizedForYouInner({ getToken }: { getToken: () => Promise<string 
   }
 
   return (
-    <div className="flex flex-col gap-y-8 px-4 sm:px-6 lg:px-8">
+    <div className="flex flex-col gap-y-8">
       <ProductList title="Pour vous" items={items} />
     </div>
   );
@@ -78,9 +78,15 @@ function PersonalizedForYouWithClerk() {
   return <PersonalizedForYouInner getToken={getToken} />;
 }
 
+/** Recommendations personnelles : uniquement pour les clients connectés (Clerk). */
 export function PersonalizedForYou() {
   if (!CLERK_UI_ENABLED) {
-    return <PersonalizedForYouInner getToken={async () => null} />;
+    return null;
   }
-  return <PersonalizedForYouWithClerk />;
+
+  return (
+    <SignedIn>
+      <PersonalizedForYouWithClerk />
+    </SignedIn>
+  );
 }
