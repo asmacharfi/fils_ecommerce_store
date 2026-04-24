@@ -3,7 +3,7 @@
 import { useAuth } from "@clerk/nextjs";
 import axios, { isAxiosError } from "axios";
 import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 
 import Button from "@/components/ui/button";
@@ -22,7 +22,6 @@ function SummaryInner({
 }) {
   const shopperId = useShopperId();
   const searchParams = useSearchParams();
-  const router = useRouter();
   const items = useCart((state) => state.items);
   const removeAll = useCart((state) => state.removeAll);
 
@@ -48,10 +47,13 @@ function SummaryInner({
 
     toast.success("Paiement confirmé.");
     removeAll();
-    // Avoid router.refresh() here — it refetches the whole RSC tree and can remount Clerk before the session is ready, hiding Connexion / compte. Strip success params with a client navigation instead.
+    // Full reload to same pathname (no query) so Clerk rehydrates from cookies after the external Stripe redirect.
+    // router.replace() alone can leave the session UI stuck as signed-out until manual refresh.
     const path = typeof window !== "undefined" ? window.location.pathname || "/cart" : "/cart";
     setTimeout(() => {
-      if (searchParams.get("success")) router.replace(path);
+      if (searchParams.get("success") && typeof window !== "undefined") {
+        window.location.replace(`${window.location.origin}${path}`);
+      }
     }, 0);
 
     const base = getStoreApiRoot();
@@ -60,7 +62,7 @@ function SummaryInner({
         /* Webhook may still mark paid; avoid noisy toast */
       });
     }
-  }, [searchParams, removeAll, router]);
+  }, [searchParams, removeAll]);
 
   const totalPrice = items.reduce((total, line) => {
     return total + Number(line.product.price) * line.quantity;

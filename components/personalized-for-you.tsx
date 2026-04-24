@@ -13,7 +13,24 @@ import { useShopperId } from "@/hooks/use-shopper-id";
 import useCart from "@/hooks/use-cart";
 import { CLERK_UI_ENABLED } from "@/lib/clerk-public";
 
-function PersonalizedForYouInner({ getToken }: { getToken: () => Promise<string | null> }) {
+/** True when both lists contain exactly the same product IDs (order ignored). */
+function isSameProductIdSet(recommendedIds: string[], featuredIds: string[]): boolean {
+  if (recommendedIds.length !== featuredIds.length) return false;
+  const featured = new Set(featuredIds);
+  if (featured.size !== featuredIds.length) return false;
+  for (const id of recommendedIds) {
+    if (!featured.has(id)) return false;
+  }
+  return true;
+}
+
+function PersonalizedForYouInner({
+  getToken,
+  featuredProductIds,
+}: {
+  getToken: () => Promise<string | null>;
+  featuredProductIds: string[];
+}) {
   const shopperId = useShopperId();
   const cartItems = useCart((s) => s.items);
   const [items, setItems] = useState<Product[] | null>(null);
@@ -39,7 +56,13 @@ function PersonalizedForYouInner({ getToken }: { getToken: () => Promise<string 
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (cancelled) return;
-        setItems(normalizeProducts(res.data));
+        const normalized = normalizeProducts(res.data);
+        const ids = normalized.map((p) => p.id);
+        if (isSameProductIdSet(ids, featuredProductIds)) {
+          setItems([]);
+        } else {
+          setItems(normalized);
+        }
         setError(false);
       } catch {
         if (!cancelled) {
@@ -52,7 +75,7 @@ function PersonalizedForYouInner({ getToken }: { getToken: () => Promise<string 
     return () => {
       cancelled = true;
     };
-  }, [getToken, shopperId, cartItems]);
+  }, [getToken, shopperId, cartItems, featuredProductIds]);
 
   if (items === null) {
     return (
@@ -73,20 +96,24 @@ function PersonalizedForYouInner({ getToken }: { getToken: () => Promise<string 
   );
 }
 
-function PersonalizedForYouWithClerk() {
+function PersonalizedForYouWithClerk({ featuredProductIds }: { featuredProductIds: string[] }) {
   const { getToken } = useAuth();
-  return <PersonalizedForYouInner getToken={getToken} />;
+  return <PersonalizedForYouInner getToken={getToken} featuredProductIds={featuredProductIds} />;
 }
 
-/** Recommendations personnelles : uniquement pour les clients connectés (Clerk). */
-export function PersonalizedForYou() {
+type PersonalizedForYouProps = {
+  featuredProductIds: string[];
+};
+
+/** Recommandations : connectés uniquement, et masquées si identiques à « À la une » (mêmes IDs). */
+export function PersonalizedForYou({ featuredProductIds }: PersonalizedForYouProps) {
   if (!CLERK_UI_ENABLED) {
     return null;
   }
 
   return (
     <SignedIn>
-      <PersonalizedForYouWithClerk />
+      <PersonalizedForYouWithClerk featuredProductIds={featuredProductIds} />
     </SignedIn>
   );
 }
