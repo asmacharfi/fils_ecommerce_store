@@ -213,7 +213,7 @@ const AIDrawer = () => {
   return (
     <Fragment>
       <div
-        className="fixed inset-0 z-40 bg-black/50 xl:hidden"
+        className="fixed inset-0 z-40 bg-black/50 sm:hidden"
         onClick={closeChat}
         aria-hidden="true"
       />
@@ -222,7 +222,7 @@ const AIDrawer = () => {
         role="dialog"
         aria-modal="true"
         aria-labelledby="ai-drawer-title"
-        className="fixed z-50 box-border overflow-hidden border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 max-xl:inset-0 max-xl:h-[100dvh] max-xl:w-full xl:left-auto xl:right-0 xl:top-0 xl:h-[100dvh] xl:w-[min(100vw,448px)] xl:border-l"
+        className="fixed z-50 box-border overflow-hidden border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 max-sm:inset-0 max-sm:h-[100dvh] max-sm:w-full sm:left-auto sm:right-0 sm:top-0 sm:h-screen sm:w-[448px] sm:border-l"
       >
         <div className="relative h-full w-full">
           <header className="absolute left-0 right-0 top-0 z-10 h-16 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -243,7 +243,7 @@ const AIDrawer = () => {
             </div>
           </header>
 
-          <div className="absolute bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-0 right-0 top-16 overflow-y-auto overscroll-contain px-4 py-4">
+          <div className="absolute bottom-[88px] left-0 right-0 top-16 overflow-y-auto overscroll-contain px-4 py-4">
             {error && (
               <AssistantErrorPanel
                 error={error}
@@ -345,7 +345,7 @@ const AIDrawer = () => {
             )}
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 border-t border-zinc-200 bg-white px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="absolute bottom-0 left-0 right-0 border-t border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950">
             <form onSubmit={onSubmit} className="relative">
               <input
                 value={input}

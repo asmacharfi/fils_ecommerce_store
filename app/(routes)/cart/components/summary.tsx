@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import axios from "axios";
+import axios, { isAxiosError } from "axios";
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
@@ -93,12 +93,36 @@ function SummaryInner({
     }
 
     try {
-      const token = await getToken();
-      const response = await axios.post(`${base}/checkout`, payload, {
+      let token: string | null = null;
+      if (userId) {
+        // Fresh JWT for checkout: admin verifies Bearer must match body clerkUserId (Clerk v4 typings omit skipCache).
+        token = await (getToken as (opts?: { skipCache?: boolean }) => Promise<string | null>)({
+          skipCache: true,
+        });
+        if (!token) {
+          toast.error("Session expirée. Reconnectez-vous puis réessayez le paiement.");
+          return;
+        }
+      }
+
+      const response = await axios.post<{ url?: string }>(`${base}/checkout`, payload, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      window.location.href = response.data.url;
-    } catch {
+      const url = response.data?.url;
+      if (!url || typeof url !== "string") {
+        toast.error("Réponse de paiement invalide. Vérifiez la configuration Stripe sur l’admin.");
+        return;
+      }
+      window.location.href = url;
+    } catch (e) {
+      if (isAxiosError(e) && e.response?.status === 403) {
+        toast.error("Paiement refusé : session non reconnue. Reconnectez-vous et réessayez.");
+        return;
+      }
+      if (isAxiosError(e) && typeof e.response?.data === "string" && e.response.data.length < 200) {
+        toast.error(e.response.data);
+        return;
+      }
       toast.error("Échec du paiement. Réessayez.");
     }
   };
