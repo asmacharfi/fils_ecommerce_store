@@ -42,9 +42,13 @@ function AiChatTrigger({ onClick }: { onClick: () => void }) {
 
 function CartTrigger({ count, onClick }: { count: number; onClick: () => void }) {
   return (
-    <Button type="button" onClick={onClick} className="flex items-center rounded-full bg-black px-4 py-2">
-      <ShoppingBag size={20} color="white" />
-      <span className="ml-2 text-sm font-medium text-white">{count}</span>
+    <Button 
+      type="button" 
+      onClick={onClick} 
+      className="flex items-center rounded-full bg-transparent px-3 py-2 text-zinc-700 hover:text-zinc-900 dark:text-zinc-200 dark:hover:text-white transition-colors"
+    >
+      <ShoppingBag size={20} className="text-zinc-700 dark:text-zinc-200" />
+      <span className="ml-2 text-sm font-medium">{count}</span>
     </Button>
   );
 }
