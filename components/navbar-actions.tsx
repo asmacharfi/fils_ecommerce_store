@@ -14,7 +14,7 @@ import { CLERK_UI_ENABLED } from "@/lib/clerk-public";
 const MY_ORDERS_LINK_CLASS =
   "max-w-[6.5rem] truncate text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-200 dark:hover:text-white sm:max-w-none";
 
-/** Outline user icon — matches “sign in / profile” affordance in the header */
+
 const SIGN_IN_ICON_BUTTON_CLASS =
   "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-zinc-600 outline-none ring-offset-white transition-colors hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-zinc-400 dark:text-zinc-300 dark:ring-offset-zinc-950 dark:hover:bg-zinc-800";
 
@@ -42,14 +42,14 @@ function AiChatTrigger({ onClick }: { onClick: () => void }) {
 
 function CartTrigger({ count, onClick }: { count: number; onClick: () => void }) {
   return (
-    <Button 
+    <button 
       type="button" 
       onClick={onClick} 
-      className="flex items-center rounded-full bg-transparent px-3 py-2 text-zinc-700 hover:text-zinc-900 dark:text-zinc-200 dark:hover:text-white transition-colors"
+      className="flex items-center rounded-full bg-transparent border border-transparent px-3 py-2 text-zinc-700 hover:text-zinc-900 dark:text-zinc-200 dark:hover:text-white transition-colors"
     >
       <ShoppingBag size={20} className="text-zinc-700 dark:text-zinc-200" />
       <span className="ml-2 text-sm font-medium">{count}</span>
-    </Button>
+    </button>
   );
 }
 
